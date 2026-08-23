@@ -1,0 +1,56 @@
+# Docker Compose — Run the entire application with one command
+# Usage: docker-compose up
+#
+# This starts all services: PostgreSQL, Backend, and Frontend
+# Your teammates don't need to install Python, Node, or PostgreSQL locally
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: healthcare-db
+    environment:
+      POSTGRES_DB: healthcare_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build: .
+    container_name: healthcare-backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/healthcare_db
+      CHROMA_PERSIST_DIRECTORY: ./chroma_data
+      EMBEDDING_MODEL: BAAI/bge-small-en-v1.5
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: qwen2:1.5b
+      USE_OLLAMA: "True"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - chroma_data:/app/chroma_data
+
+  # React Frontend
+  frontend:
+    build: ./frontend
+    container_name: healthcare-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  chroma_data:
