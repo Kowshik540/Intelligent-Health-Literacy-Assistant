@@ -1,0 +1,74 @@
+CLINICAL GUIDELINES: FEVER MANAGEMENT
+World Health Organization - 2024
+
+SECTION 1: DEFINITION
+
+Fever is defined as a body temperature above 38°C (100.4°F). It is a common symptom that indicates the body is fighting an infection or other condition. Normal body temperature is approximately 36.1°C to 37.2°C (97°F to 99°F).
+
+Classification by temperature:
+- Low-grade fever: 38.0°C – 38.9°C (100.4°F – 102°F)
+- Moderate fever: 39.0°C – 39.9°C (102.2°F – 103.8°F)
+- High fever: 40.0°C or above (104°F or above)
+- Hyperpyrexia: 41.5°C or above (106.7°F) — medical emergency
+
+SECTION 2: COMMON CAUSES
+
+Fever is most commonly caused by:
+- Viral infections (influenza, common cold, COVID-19, dengue)
+- Bacterial infections (pneumonia, urinary tract infection, strep throat)
+- Inflammatory conditions (rheumatoid arthritis, inflammatory bowel disease)
+- Heat exhaustion or heat stroke
+- Certain medications (antibiotics, seizure medications)
+- Immunizations (temporary low-grade fever is normal after vaccination)
+- Teething in infants (mild fever only)
+
+SECTION 3: SYMPTOMS ASSOCIATED WITH FEVER
+
+When you have fever, you may also experience:
+- Chills and shivering
+- Sweating
+- Headache
+- Muscle aches and body pain
+- Loss of appetite
+- Dehydration
+- Fatigue and weakness
+- Irritability (especially in children)
+
+SECTION 4: WHEN TO SEEK MEDICAL ATTENTION
+
+Seek immediate medical care if:
+- Temperature exceeds 40°C (104°F) in adults
+- Fever lasts more than 3 days without improvement
+- Fever is accompanied by severe headache, stiff neck, or confusion
+- Difficulty breathing or chest pain
+- Persistent vomiting or diarrhea
+- Skin rash appears with fever
+- Seizures occur (febrile seizures)
+- In infants under 3 months: any fever above 38°C requires immediate evaluation
+
+SECTION 5: TREATMENT
+
+Non-pharmacological measures:
+- Rest and adequate sleep
+- Stay hydrated (water, oral rehydration solutions, clear broths)
+- Wear light clothing
+- Keep room temperature comfortable
+- Use lukewarm sponge baths (avoid cold water)
+- Do not use ice baths or alcohol rubs
+
+Pharmacological treatment:
+- Paracetamol (Acetaminophen): First-line treatment
+  Adults: 500mg–1000mg every 4-6 hours (max 4g/day)
+  Children: 10-15mg/kg every 4-6 hours
+- Ibuprofen: Alternative or adjunct
+  Adults: 200-400mg every 6-8 hours
+  Children: 5-10mg/kg every 6-8 hours
+- Aspirin: NOT recommended for children under 16 (risk of Reye's syndrome)
+
+SECTION 6: PREVENTION
+
+- Maintain good hand hygiene (wash hands frequently)
+- Get recommended vaccinations
+- Avoid close contact with sick individuals
+- Maintain a healthy immune system through proper nutrition and sleep
+- Practice food safety (proper cooking, storage)

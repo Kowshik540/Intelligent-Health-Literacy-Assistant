@@ -1,0 +1,84 @@
+CLINICAL GUIDELINES: TYPE 2 DIABETES MELLITUS
+World Health Organization - 2024 Update
+
+SECTION 1: DEFINITION AND DIAGNOSIS
+
+Type 2 Diabetes Mellitus (T2DM) is a chronic metabolic disorder characterized by hyperglycemia resulting from insulin resistance and relative insulin deficiency. It accounts for approximately 90-95% of all diabetes cases worldwide.
+
+Diagnostic Criteria:
+- Fasting Plasma Glucose (FPG) >= 126 mg/dL (7.0 mmol/L)
+- 2-hour Oral Glucose Tolerance Test (OGTT) >= 200 mg/dL (11.1 mmol/L)
+- HbA1c >= 6.5% (48 mmol/mol)
+- Random plasma glucose >= 200 mg/dL with classic symptoms
+
+SECTION 2: RISK FACTORS
+
+Major risk factors for Type 2 Diabetes include:
+1. Obesity (BMI >= 30 kg/m2) - strongest modifiable risk factor
+2. Physical inactivity - less than 150 minutes/week of moderate activity
+3. Family history - first-degree relative with diabetes (2-6x increased risk)
+4. Age >= 45 years
+5. Hypertension (blood pressure >= 140/90 mmHg)
+6. Dyslipidemia (HDL < 35 mg/dL or triglycerides > 250 mg/dL)
+7. History of gestational diabetes
+8. Polycystic ovary syndrome (PCOS)
+
+SECTION 3: SYMPTOMS
+
+Common symptoms of uncontrolled diabetes:
+- Polyuria (frequent urination) - due to osmotic diuresis
+- Polydipsia (excessive thirst) - compensatory response to fluid loss
+- Polyphagia (increased hunger) - due to cellular glucose deprivation
+- Unexplained weight loss - despite increased food intake
+- Fatigue and weakness
+- Blurred vision - from lens swelling due to hyperglycemia
+- Slow wound healing
+- Recurrent infections (skin, urinary tract)
+
+SECTION 4: TREATMENT GUIDELINES
+
+First-Line Treatment:
+Metformin is the recommended first-line pharmacological therapy for T2DM.
+- Starting dose: 500 mg once daily with meals
+- Target dose: 1000 mg twice daily
+- Mechanism: Reduces hepatic glucose production, improves insulin sensitivity
+- Contraindications: eGFR < 30 mL/min, active liver disease
+
+Second-Line Options (when Metformin alone is insufficient):
+- SGLT2 inhibitors (e.g., Empagliflozin) - cardiovascular and renal benefits
+- GLP-1 receptor agonists (e.g., Liraglutide) - weight loss benefit
+- DPP-4 inhibitors (e.g., Sitagliptin) - weight neutral
+- Sulfonylureas (e.g., Glimepiride) - low cost but hypoglycemia risk
+
+SECTION 5: MONITORING
+
+Recommended monitoring schedule:
+- HbA1c: Every 3 months until target achieved, then every 6 months
+- Target HbA1c: < 7.0% for most adults, individualized for elderly
+- Blood pressure: Every visit, target < 130/80 mmHg
+- Lipid panel: Annually
+- Kidney function (eGFR, urine albumin): Annually
+- Eye examination: Annually (diabetic retinopathy screening)
+- Foot examination: Every visit (neuropathy and vascular assessment)
+
+SECTION 6: COMPLICATIONS
+
+Microvascular complications:
+- Diabetic retinopathy - leading cause of blindness in working-age adults
+- Diabetic nephropathy - leading cause of end-stage renal disease
+- Diabetic neuropathy - affects up to 50% of patients
+
+Macrovascular complications:
+- Coronary artery disease - 2-4x increased risk
+- Cerebrovascular disease (stroke) - 2x increased risk
+- Peripheral arterial disease - 4x increased risk
+
+SECTION 7: LIFESTYLE MODIFICATIONS
+
+Evidence-based lifestyle recommendations:
+- Weight loss: 5-7% body weight reduction significantly improves glycemic control
+- Physical activity: 150 minutes/week moderate-intensity aerobic exercise
+- Diet: Mediterranean diet or DASH diet recommended
+- Smoking cessation: Reduces cardiovascular risk by 50% within 1 year
+- Alcohol: Moderate consumption only (1 drink/day women, 2 drinks/day men)
+- Sleep: 7-9 hours per night; treat sleep apnea if present

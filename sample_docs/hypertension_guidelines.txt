@@ -1,0 +1,90 @@
+CLINICAL GUIDELINES: HYPERTENSION MANAGEMENT
+American Heart Association / American College of Cardiology - 2024
+
+SECTION 1: DEFINITION AND CLASSIFICATION
+
+Hypertension (High Blood Pressure) is defined as persistently elevated arterial blood pressure. It is the leading modifiable risk factor for cardiovascular disease worldwide.
+
+Blood Pressure Categories:
+- Normal: Systolic < 120 mmHg AND Diastolic < 80 mmHg
+- Elevated: Systolic 120-129 mmHg AND Diastolic < 80 mmHg
+- Stage 1 Hypertension: Systolic 130-139 mmHg OR Diastolic 80-89 mmHg
+- Stage 2 Hypertension: Systolic >= 140 mmHg OR Diastolic >= 90 mmHg
+- Hypertensive Crisis: Systolic > 180 mmHg AND/OR Diastolic > 120 mmHg
+
+SECTION 2: RISK FACTORS
+
+Non-modifiable risk factors:
+- Age (risk increases with age)
+- Family history of hypertension
+- Race/ethnicity (higher prevalence in African Americans)
+- Gender (men at higher risk before age 55; women after menopause)
+
+Modifiable risk factors:
+- Excessive sodium intake (> 2300 mg/day)
+- Obesity (BMI >= 30)
+- Physical inactivity
+- Excessive alcohol consumption
+- Smoking
+- Chronic stress
+- Sleep apnea
+
+SECTION 3: SYMPTOMS
+
+Hypertension is often called the "silent killer" because most patients are asymptomatic. Symptoms typically only appear when blood pressure reaches dangerously high levels:
+- Severe headaches
+- Nosebleeds
+- Shortness of breath
+- Dizziness
+- Chest pain
+- Visual changes
+- Blood in urine
+
+SECTION 4: DIAGNOSIS
+
+Blood pressure measurement guidelines:
+- Use validated automatic device
+- Patient should be seated, relaxed for 5 minutes
+- Arm supported at heart level
+- Take 2-3 readings, 1 minute apart, average the results
+- Confirm with out-of-office measurements (home BP or ambulatory monitoring)
+- Diagnosis requires elevated readings on 2 or more occasions
+
+SECTION 5: TREATMENT
+
+Non-pharmacological interventions (all patients):
+- DASH diet (Dietary Approaches to Stop Hypertension)
+- Sodium restriction to < 1500 mg/day (optimal) or < 2300 mg/day
+- Regular aerobic exercise: 90-150 minutes/week
+- Weight loss if overweight: each 1 kg lost reduces BP by ~1 mmHg
+- Limit alcohol: <= 2 drinks/day men, <= 1 drink/day women
+- Potassium supplementation: 3500-5000 mg/day from dietary sources
+
+First-line pharmacological treatment:
+- ACE inhibitors (e.g., Lisinopril, Enalapril)
+- ARBs (e.g., Losartan, Valsartan)
+- Calcium channel blockers (e.g., Amlodipine, Nifedipine)
+- Thiazide diuretics (e.g., Hydrochlorothiazide, Chlorthalidone)
+
+Treatment targets:
+- General population: < 130/80 mmHg
+- Elderly (>= 65 years): < 130 systolic mmHg if tolerated
+- Diabetes patients: < 130/80 mmHg
+- Chronic kidney disease: < 130/80 mmHg
+
+SECTION 6: COMPLICATIONS OF UNCONTROLLED HYPERTENSION
+
+Target organ damage:
+- Heart: Left ventricular hypertrophy, heart failure, coronary artery disease
+- Brain: Stroke (ischemic and hemorrhagic), vascular dementia
+- Kidneys: Chronic kidney disease, renal failure
+- Eyes: Hypertensive retinopathy, vision loss
+- Blood vessels: Aortic aneurysm, peripheral arterial disease
+
+SECTION 7: MONITORING
+
+Follow-up schedule:
+- Monthly until BP at target
+- Then every 3-6 months once stable
+- Annual assessment: kidney function, electrolytes, lipids
+- Home BP monitoring recommended for all hypertensive patients

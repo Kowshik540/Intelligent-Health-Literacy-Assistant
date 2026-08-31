@@ -1,0 +1,17 @@
+# Phase 1 — Environment and Data Ingestion
+fastapi==0.115.6
+uvicorn==0.34.0
+pydantic-settings==2.7.1
+pydantic==2.10.5
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+chromadb==0.5.23
+pdfplumber==0.11.4
+langchain==0.3.14
+langchain-community==0.3.14
+langchain-text-splitters==0.3.4
+sentence-transformers==3.3.1
+python-dotenv==1.0.1
+
+# Phase 2 — LLM and RAG (added this phase)
+langchain-openai==0.3.0
