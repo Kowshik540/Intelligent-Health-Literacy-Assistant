@@ -30,6 +30,40 @@
   --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
 }
 
+/* Dark theme — activated by data-theme="dark" on the root element */
+:root[data-theme="dark"] {
+  --bg-page: #0b1418;
+  --surface-card: #121e24;
+  --surface-recessed: #0f191e;
+  --border: #223038;
+  --border-soft: rgba(90, 120, 130, 0.28);
+  --glass: rgba(18, 30, 36, 0.72);
+  --glass-strong: rgba(18, 30, 36, 0.92);
+  --glass-border: rgba(90, 120, 130, 0.32);
+  --glass-border-soft: rgba(90, 120, 130, 0.22);
+  --glass-highlight: rgba(255, 255, 255, 0.05);
+  --cyan: #6fd0e8;
+  --cyan-dim: #4fb4d2;
+  --blue: #5aa7d0;
+  --ink: #e8f3f7;
+  --ink-dim: #a7bcc4;
+  --muted: #7d929a;
+  --success: #4cc79a;
+  --danger: #d98080;
+  --on-accent: #06121a;
+}
+
+/* Dark theme adjustments for panels that use hardcoded light colors */
+:root[data-theme="dark"] .shell {
+  background: linear-gradient(160deg, rgba(18, 30, 36, .92), rgba(15, 25, 30, .82));
+}
+
+:root[data-theme="dark"] .top-navigation,
+:root[data-theme="dark"] .search {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border-soft);
+}
+
 * { box-sizing: border-box; }
 
 html, body, #root { height: 100%; }

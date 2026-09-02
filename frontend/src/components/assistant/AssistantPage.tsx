@@ -540,9 +540,20 @@ export default function AssistantPage() {
 
       setStage("complete");
 
+      // A refusal or a greeting has answer text but no supporting citations,
+      // so it must not be shown as a "verified" cited response.
+      const isRefusal =
+        (data.clinical_answer || "")
+          .toLowerCase()
+          .includes("i cannot provide information");
+
+      const hasCitations = Boolean(data.citations?.length);
+
       const hasAnswer =
-        Boolean(data.clinical_answer?.trim()) ||
-        Boolean(data.simplified_answer?.trim());
+        (Boolean(data.clinical_answer?.trim()) ||
+          Boolean(data.simplified_answer?.trim())) &&
+        hasCitations &&
+        !isRefusal;
 
       const assistantMessage: Message = {
         id: Date.now() + 1,
@@ -591,7 +602,7 @@ export default function AssistantPage() {
           id: Date.now() + 1,
           role: "assistant",
           text:
-            "I’m unable to connect to the health assistant service right now. Please make sure the Docker backend is running and try again.",
+            "I'm unable to connect to the health assistant service right now. Please make sure the backend server is running on port 8000 and try again.",
           unsupported: true,
         },
       ]);

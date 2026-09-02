@@ -574,6 +574,21 @@ function App() {
   const [activeTab, setActiveTab] =
     useState<Page>("Overview");
 
+  // Theme is persisted so the user's choice survives a page reload.
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem("health-ai-theme");
+    return saved === "dark" ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("health-ai-theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((current) => (current === "light" ? "dark" : "light"));
+  };
+
   const navigate = (page: Page) => {
     setActiveTab(page);
   };
@@ -611,6 +626,8 @@ function App() {
         <Header
           activeTab={activeTab}
           onTabChange={navigate}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
 
         {renderPage()}

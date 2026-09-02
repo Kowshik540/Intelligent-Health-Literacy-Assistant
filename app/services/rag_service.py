@@ -81,6 +81,29 @@ class RAGService:
         self.prompt = ChatPromptTemplate.from_template(CLINICAL_RAG_PROMPT)
         self.output_parser = StrOutputParser()
 
+    # Words/phrases that indicate a greeting or small-talk rather than a medical question
+    GREETING_PATTERNS = {
+        "hi", "hello", "hey", "hii", "helo", "hlo", "yo", "hola",
+        "good morning", "good afternoon", "good evening", "good night",
+        "how are you", "how r u", "whats up", "what's up", "sup",
+        "thanks", "thank you", "thankyou", "ok", "okay", "bye", "goodbye",
+        "who are you", "what can you do", "help",
+    }
+
+    # Returns True when the message is a greeting/small-talk and not a real medical query
+    def _is_greeting(self, question: str) -> bool:
+        cleaned = question.strip().lower().strip(".!?,")
+        if not cleaned:
+            return True
+        # Short messages that exactly match a greeting phrase
+        if cleaned in self.GREETING_PATTERNS:
+            return True
+        # Very short single-word inputs that start like a greeting
+        words = cleaned.split()
+        if len(words) <= 2 and words[0] in self.GREETING_PATTERNS:
+            return True
+        return False
+
     # Main method — takes a question, retrieves relevant docs, generates a cited answer
     async def get_response(self, question: str, conversation_id: Optional[str] = None) -> dict:
         if not self.llm:
@@ -88,6 +111,19 @@ class RAGService:
                 "answer": "System error: No LLM configured.",
                 "sources": [],
                 "citations": [],
+            }
+
+        # Greetings and small-talk are handled directly — no document retrieval, no citations
+        if self._is_greeting(question):
+            return {
+                "answer": (
+                    "Hello. I'm a health information assistant. Ask me a health "
+                    "question — for example about symptoms, conditions, or treatments — "
+                    "and I'll answer using verified medical documents."
+                ),
+                "sources": [],
+                "citations": [],
+                "is_greeting": True,
             }
 
         # Step 1: Semantic search in ChromaDB for the most relevant document chunks
@@ -117,7 +153,8 @@ class RAGService:
             if score >= self.RELEVANCE_THRESHOLD
         ]
 
-        # If no chunks are relevant enough, refuse to answer rather than hallucinate
+        # If no chunks are relevant enough, refuse to answer rather than hallucinate.
+        # No citations are attached because there is no supporting evidence.
         if not relevant_results:
             return {
                 "answer": (
@@ -125,8 +162,9 @@ class RAGService:
                     "in my database do not contain relevant information about your question. "
                     "Please consult a healthcare professional for guidance."
                 ),
-                "sources": [c["source"] for c in all_citations[:2]],
-                "citations": all_citations,
+                "sources": [],
+                "citations": [],
+                "is_refusal": True,
             }
 
         # Step 3: Build context from relevant chunks for the LLM
@@ -169,6 +207,20 @@ class RAGService:
                 "I found relevant medical documents but could not generate a response. "
                 f"Please ensure the LLM service is running. Error: {str(e)}"
             )
+
+        # If the LLM decided the retrieved text does not actually answer the question
+        # (e.g. it only matched an index or copyright page), treat it as a refusal
+        # and drop the misleading citations.
+        if "i cannot provide information" in answer.lower():
+            return {
+                "answer": (
+                    "I cannot provide information on this topic based on my verified "
+                    "medical documents. Please consult a healthcare professional."
+                ),
+                "sources": [],
+                "citations": [],
+                "is_refusal": True,
+            }
 
         sources = list(set([c["source"] for c in citations]))
 

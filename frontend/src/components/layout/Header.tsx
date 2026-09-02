@@ -3,11 +3,15 @@ import type { Page } from "../../types";
 type HeaderProps = {
   activeTab: Page;
   onTabChange: (tab: Page) => void;
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
 };
 
 export default function Header({
   activeTab,
   onTabChange,
+  theme,
+  onToggleTheme,
 }: HeaderProps) {
   const tabs: Page[] = [
     "Overview",
@@ -51,9 +55,15 @@ export default function Header({
 
         <button
           className="icon-button"
-          aria-label="Notifications"
+          aria-label="Toggle light or dark theme"
+          title={
+            theme === "light"
+              ? "Switch to dark mode"
+              : "Switch to light mode"
+          }
+          onClick={onToggleTheme}
         >
-          ◔
+          {theme === "light" ? "☾" : "☀"}
         </button>
 
         <div className="avatar">AI</div>
