@@ -19,6 +19,12 @@ from app.models.conversation import Conversation, Message, MessageRole
 from app.services.rag_service import RAGService
 from app.services.guardrails_service import GuardrailsService
 from app.services.jargon_simplifier import JargonSimplifier
+from app.services.clarification_service import ClarificationService
+
+
+# Marker embedded in clarification messages so we can recognise them later
+# in the conversation history without a separate database column.
+CLARIFICATION_MARKER = "[[CLARIFY]]"
 
 
 # ============================================================
@@ -50,6 +56,7 @@ class ChatService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self._guardrails = GuardrailsService()
+        self._clarifier = ClarificationService()
         self._simplifier = None
 
     @property
@@ -101,6 +108,57 @@ class ChatService:
         await self.db.flush()
 
         return conversation
+
+    # ============================================================
+    # CLARIFICATION STATE
+    # ============================================================
+
+    async def _clarification_state(
+        self,
+        conversation_id: Optional[str],
+    ) -> tuple[bool, Optional[str]]:
+        """
+        Checks whether the assistant's most recent message in this
+        conversation was a clarification prompt.
+
+        Returns:
+            (already_clarified, original_question)
+
+        original_question is the user's message that triggered the
+        clarification, so it can be combined with the new details.
+        """
+
+        if not conversation_id:
+            return False, None
+
+        result = await self.db.execute(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.created_at.desc())
+            .limit(5)
+        )
+
+        recent = list(result.scalars().all())
+
+        if not recent:
+            return False, None
+
+        # The most recent message should be the assistant's clarification.
+        last = recent[0]
+
+        if (
+            last.role == MessageRole.ASSISTANT
+            and CLARIFICATION_MARKER in (last.content or "")
+        ):
+            # Find the user question that came just before the clarification.
+            original_question = None
+            for msg in recent[1:]:
+                if msg.role == MessageRole.USER:
+                    original_question = msg.content
+                    break
+            return True, original_question
+
+        return False, None
 
     # ============================================================
     # MAIN MESSAGE PIPELINE
@@ -166,11 +224,81 @@ class ChatService:
         sanitized_query = guardrail_result.sanitized_query
 
         # ========================================================
+        # STEP 2b — AGENTIC CLARIFICATION
+        # ========================================================
+        #
+        # Before answering, decide whether we have enough clinical
+        # context. If the user describes a symptom without detail,
+        # ask targeted follow-up questions instead of answering.
+
+        # Look back at the conversation to see if we already asked
+        # a clarifying question that this message is answering.
+        already_clarified, prior_question = await self._clarification_state(
+            conversation_id
+        )
+
+        clar = self._clarifier.check(
+            message=sanitized_query,
+            already_clarified=already_clarified,
+        )
+
+        if clar.needs_clarification:
+            conversation = await self.get_or_create_conversation(
+                user_id=user_id,
+                conversation_id=conversation_id,
+                title=message[:50],
+            )
+
+            user_msg = Message(
+                conversation_id=conversation.id,
+                role=MessageRole.USER,
+                content=sanitized_query,
+            )
+            self.db.add(user_msg)
+            await self.db.flush()
+
+            # The marker is stored in the database so we can recognise this
+            # as a clarification later, but it is stripped before display.
+            ai_msg = Message(
+                conversation_id=conversation.id,
+                role=MessageRole.ASSISTANT,
+                content=f"{CLARIFICATION_MARKER}{clar.follow_up_message}",
+            )
+            self.db.add(ai_msg)
+            await self.db.flush()
+
+            # Return a clean copy (no marker) for the immediate response.
+            ai_msg_clean = Message(
+                id=ai_msg.id,
+                conversation_id=ai_msg.conversation_id,
+                role=MessageRole.ASSISTANT,
+                content=clar.follow_up_message,
+                created_at=ai_msg.created_at,
+            )
+
+            return {
+                "conversation_id": conversation.id,
+                "message": ai_msg_clean,
+                "sources": [],
+                "citations": [],
+                "is_emergency": False,
+                "pii_detected": guardrail_result.pii_detected,
+                "clinical_answer": clar.follow_up_message,
+                "simplified_answer": clar.follow_up_message,
+            }
+
+        # If this message answers a previous clarification, combine the
+        # original question with the new details for a richer retrieval query.
+        retrieval_query = sanitized_query
+        if already_clarified and prior_question:
+            retrieval_query = f"{prior_question}. Additional details: {sanitized_query}"
+
+        # ========================================================
         # STEP 3 — RAG RETRIEVAL + CLINICAL ANSWER
         # ========================================================
 
         rag_response = await self.rag_service.get_response(
-            question=sanitized_query,
+            question=retrieval_query,
             conversation_id=conversation_id,
         )
 

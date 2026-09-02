@@ -147,10 +147,25 @@ class RAGService:
                 "text_snippet": doc.page_content[:200],
             })
 
-        # Step 2: Filter to only chunks above the relevance threshold
+        # Step 2: Filter to only chunks above the relevance threshold.
+        # Also drop index / table-of-contents chunks, which match many
+        # queries but contain no real guidance (dotted leaders, "cid:"
+        # font artifacts, or the word "Index" in the section header).
+        def _is_index_chunk(doc) -> bool:
+            text = (doc.page_content or "")
+            section = (doc.metadata.get("section_header", "") or "").lower()
+            # Section header explicitly says this is an index / contents page.
+            if "index, volumes" in section or "table of contents" in section:
+                return True
+            # Long runs of dot-leaders ("......") are unique to contents pages,
+            # where entries are padded with dots before the page number.
+            if "........" in text:
+                return True
+            return False
+
         relevant_results = [
             (doc, score) for doc, score in results_with_scores
-            if score >= self.RELEVANCE_THRESHOLD
+            if score >= self.RELEVANCE_THRESHOLD and not _is_index_chunk(doc)
         ]
 
         # If no chunks are relevant enough, refuse to answer rather than hallucinate.

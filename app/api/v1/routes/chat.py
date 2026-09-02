@@ -62,4 +62,10 @@ async def get_conversation(conversation_id: str, db: AsyncSession = Depends(get_
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    return ConversationWithMessages.model_validate(conversation)
+    response = ConversationWithMessages.model_validate(conversation)
+
+    # Strip the internal clarification marker before returning history.
+    for msg in response.messages:
+        msg.content = msg.content.replace("[[CLARIFY]]", "")
+
+    return response
