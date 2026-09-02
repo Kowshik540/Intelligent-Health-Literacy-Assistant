@@ -56,7 +56,7 @@ python seed_documents.py
 ollama serve
 
 # 7. Start Backend (Terminal 2)
-uvicorn app.main:app --port 8003
+uvicorn app.main:app --port 8000
 
 # 8. Start Frontend (Terminal 3)
 cd frontend

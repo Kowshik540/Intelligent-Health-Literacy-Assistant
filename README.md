@@ -53,7 +53,7 @@ ollama serve
 ### Terminal 2 — Start Backend (FastAPI)
 ```bash
 venv\Scripts\activate
-uvicorn app.main:app --host 0.0.0.0 --port 8003
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### Terminal 3 — Start Frontend (React)
@@ -64,8 +64,8 @@ npm run dev
 
 ### Access
 - **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:8003
-- **API Docs:** http://localhost:8003/docs
+- **Backend API:** http://localhost:8000
+- **API Docs:** http://localhost:8000/docs
 
 ## Running Tests
 
