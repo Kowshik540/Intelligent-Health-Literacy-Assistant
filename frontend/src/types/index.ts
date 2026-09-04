@@ -31,4 +31,7 @@ export type Message = {
   text: string;
   response?: ApiResponse;
   unsupported?: boolean;
+  // True when the answer is helpful general knowledge (not a refusal) but is
+  // not backed by a verified document citation.
+  general?: boolean;
 };

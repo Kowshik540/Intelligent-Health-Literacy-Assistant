@@ -540,36 +540,57 @@ export default function AssistantPage() {
 
       setStage("complete");
 
-      // A refusal or a greeting has answer text but no supporting citations,
-      // so it must not be shown as a "verified" cited response.
-      const isRefusal =
-        (data.clinical_answer || "")
-          .toLowerCase()
-          .includes("i cannot provide information");
+      const answerText = data.clinical_answer || data.simplified_answer || "";
+      const lowerAnswer = answerText.toLowerCase();
+
+      // A hard refusal has no usable answer text.
+      const isRefusal = lowerAnswer.includes("i cannot provide information");
 
       const hasCitations = Boolean(data.citations?.length);
 
-      const hasAnswer =
-        (Boolean(data.clinical_answer?.trim()) ||
-          Boolean(data.simplified_answer?.trim())) &&
-        hasCitations &&
-        !isRefusal;
+      // A greeting / assistant intro is conversational, not a medical answer.
+      const isGreeting =
+        lowerAnswer.includes("i'm a health information assistant") ||
+        lowerAnswer.includes("ask me a health question");
+
+      // A clarification prompt asks the user for more details.
+      const isClarification = lowerAnswer.includes(
+        "i need a little more information"
+      );
+
+      // General-knowledge answers carry this disclaimer from the backend.
+      const isGeneral =
+        !hasCitations &&
+        !isRefusal &&
+        !isGreeting &&
+        !isClarification &&
+        lowerAnswer.includes("general health information");
+
+      // A verified answer has real document citations.
+      const hasVerified =
+        Boolean(answerText.trim()) && hasCitations && !isRefusal;
 
       const assistantMessage: Message = {
         id: Date.now() + 1,
         role: "assistant",
 
         text:
-          data.clinical_answer ||
-          data.simplified_answer ||
-          "I could not find sufficient verified evidence in the current medical knowledge base to answer this question safely. I won't guess or generate unsupported medical information.",
+          answerText ||
+          "I could not find sufficient information to answer this question safely. Please consult a healthcare professional.",
 
-        response:
-          hasAnswer
-            ? response
-            : undefined,
+        response: hasVerified ? response : undefined,
 
-        unsupported: !hasAnswer,
+        // Only a true refusal is flagged unsupported. Greetings, clarifications,
+        // general answers, and verified answers all avoid the warning banner.
+        unsupported:
+          !hasVerified &&
+          !isGeneral &&
+          !isGreeting &&
+          !isClarification &&
+          isRefusal,
+
+        // General-knowledge answers get a softer, honest note.
+        general: isGeneral,
       };
 
       setMessages((previous) => [
@@ -577,7 +598,7 @@ export default function AssistantPage() {
         assistantMessage,
       ]);
 
-      if (hasAnswer && data.citations?.length) {
+      if (hasVerified && data.citations?.length) {
         setSelectedSource(response);
       }
 
@@ -1081,9 +1102,25 @@ export default function AssistantPage() {
                     </div>
                   )}
 
-                {/* UNSUPPORTED */}
-                {message.role ===
-                  "assistant" &&
+                {/* GENERAL KNOWLEDGE (helpful, but not from a verified document) */}
+                {message.role === "assistant" &&
+                  message.general && (
+                    <div className="general-answer">
+                      <span>
+                        ⓘ GENERAL INFORMATION
+                      </span>
+
+                      <p>
+                        This answer is based on general medical
+                        knowledge, not a specific verified document
+                        in the library. Please confirm with a
+                        qualified healthcare professional.
+                      </p>
+                    </div>
+                  )}
+
+                {/* UNSUPPORTED — only for a true refusal with no answer */}
+                {message.role === "assistant" &&
                   message.unsupported && (
                     <div className="unsupported-answer">
                       <span>
@@ -1091,13 +1128,10 @@ export default function AssistantPage() {
                       </span>
 
                       <p>
-                        The system refused to
-                        provide an unsupported
-                        answer. This prevents
-                        the model from guessing
-                        when the indexed sources
-                        do not contain sufficient
-                        evidence.
+                        The system did not find sufficient
+                        evidence to answer this safely and did
+                        not guess. Please consult a healthcare
+                        professional.
                       </p>
                     </div>
                   )}

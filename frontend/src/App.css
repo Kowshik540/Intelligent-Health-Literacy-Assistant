@@ -720,6 +720,10 @@ textarea {
 .unsupported-answer span { font-family:var(--font-mono); font-size:8px; letter-spacing:.08em; color:var(--danger); font-weight:600; }
 .unsupported-answer p { margin:7px 0 0; color:var(--ink-dim); font-size:10px; line-height:1.55; }
 
+.general-answer { margin-top:8px; padding:13px; border:1px solid rgba(89,187,216,.28); border-radius:14px; background:rgba(89,187,216,.06); }
+.general-answer span { font-family:var(--font-mono); font-size:8px; letter-spacing:.08em; color:var(--cyan-dim); font-weight:600; }
+.general-answer p { margin:7px 0 0; color:var(--ink-dim); font-size:10px; line-height:1.55; }
+
 .verification-box { display:flex; align-items:center; gap:12px; padding:14px; border:1px solid var(--glass-border); border-radius:14px; background:rgba(89,187,216,.055); }
 .verification-box strong, .verification-box small { display:block; }
 .verification-box strong { font-size:11px; color:var(--ink); }
