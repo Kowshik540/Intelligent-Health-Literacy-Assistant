@@ -287,11 +287,19 @@ export default function AssistantPage() {
     }
   };
 
-  const submitFeedback = async () => {
-    if (!feedback || feedbackMessageId === null) return;
+  const submitFeedback = async (
+    ratingValue?: "up" | "down",
+    targetMessageId?: number,
+  ) => {
+    // Use explicit arguments when provided (avoids React state-update races);
+    // otherwise fall back to the current state (used by the down-vote form).
+    const rating = ratingValue ?? feedback;
+    const msgId = targetMessageId ?? feedbackMessageId;
+
+    if (!rating || msgId === null || msgId === undefined) return;
 
     const assistantMessageIndex = messages.findIndex(
-      (message) => message.id === feedbackMessageId
+      (message) => message.id === msgId
     );
 
     if (assistantMessageIndex === -1) return;
@@ -324,19 +332,19 @@ export default function AssistantPage() {
 
     // A positive rating can be submitted immediately.
     // A negative rating requires the selected issue before submission.
-    if (feedback === "down" && !feedbackType) return;
+    if (rating === "down" && !feedbackType) return;
 
     try {
       await axios.post("http://localhost:8000/api/v1/feedback/", {
         message_id: response.message_id,
         conversation_id: response.conversation_id,
-        is_positive: feedback === "up",
+        is_positive: rating === "up",
         original_question: originalQuestion,
         ai_answer: response.answer,
         user_correction:
-          feedback === "down" ? feedbackComment.trim() || null : null,
+          rating === "down" ? feedbackComment.trim() || null : null,
         error_category:
-          feedback === "down" ? feedbackType || null : null,
+          rating === "down" ? feedbackType || null : null,
       });
 
       setFeedbackSubmitted(true);
@@ -945,9 +953,8 @@ export default function AssistantPage() {
                               setFeedbackType("");
                               setFeedbackComment("");
                               setFeedbackSubmitted(false);
-                              window.setTimeout(() => {
-                                void submitFeedback();
-                              }, 0);
+                              // Pass values explicitly to avoid a state race.
+                              void submitFeedback("up", message.id);
                             }}
                           >
                             👍
@@ -1082,9 +1089,12 @@ export default function AssistantPage() {
                                 disabled={
                                   !feedbackType
                                 }
-                                onClick={
-                                  submitFeedback
-                                }
+                                onClick={() => {
+                                  void submitFeedback(
+                                    "down",
+                                    message.id,
+                                  );
+                                }}
                               >
                                 SUBMIT FEEDBACK
                               </button>

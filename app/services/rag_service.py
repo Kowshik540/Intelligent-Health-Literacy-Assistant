@@ -202,15 +202,23 @@ class RAGService:
         # Also drop index / table-of-contents chunks, which match many
         # queries but contain no real guidance (dotted leaders, "cid:"
         # font artifacts, or the word "Index" in the section header).
+        import re as _re
+
         def _is_index_chunk(doc) -> bool:
             text = (doc.page_content or "")
             section = (doc.metadata.get("section_header", "") or "").lower()
             # Section header explicitly says this is an index / contents page.
             if "index, volumes" in section or "table of contents" in section:
                 return True
-            # Long runs of dot-leaders ("......") are unique to contents pages,
-            # where entries are padded with dots before the page number.
+            # Dot-leaders unique to contents pages: either solid runs ("......")
+            # or spaced runs (". . . . .") that pad entries before a page number.
             if "........" in text:
+                return True
+            if _re.search(r"(\.\s){5,}\.", text):
+                return True
+            # A contents entry ending in a page number after dot-leaders,
+            # e.g. "Symptom management of headache . . . 202".
+            if _re.search(r"\.\s*\.\s*\.\s*\d{1,4}\b", text):
                 return True
             return False
 
