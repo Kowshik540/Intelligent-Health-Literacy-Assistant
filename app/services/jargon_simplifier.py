@@ -12,20 +12,20 @@ from app.core.config import settings
 
 
 # Prompt template that instructs the LLM to simplify without adding new information
-SIMPLIFIER_PROMPT = """Rewrite the following medical answer in plain, simple language that a 6th grader can understand.
+SIMPLIFIER_PROMPT = """Rewrite the following medical answer in clear, plain English for a general adult reader. Keep it accurate and professional.
 
-RULES:
-1. For medical terms, add the plain meaning in parentheses. Example: "Hypertension (High Blood Pressure)"
-2. Keep ALL [Source: ...] citations exactly as they are.
-3. Break long sentences into shorter ones.
-4. Do NOT add new information or commentary.
-5. Do NOT add notes about what you did. Just give the simplified answer directly.
-6. Keep it concise — same length or shorter than the original.
+STRICT RULES:
+1. Only rephrase what is written. Do NOT add any new facts, examples, risks, or conditions that are not in the original.
+2. For medical terms, add the plain meaning in parentheses. Example: "Hypertension (high blood pressure)".
+3. Keep ALL [Source: ...] citations exactly as they are.
+4. Use short, clear sentences and a calm, respectful tone. Do NOT use childish comparisons (no "candy", "tummy", etc.).
+5. Do NOT add commentary about what you did. Give only the rewritten answer.
+6. Keep it the same length or shorter than the original.
 
 ORIGINAL:
 {clinical_answer}
 
-SIMPLIFIED:"""
+PLAIN-LANGUAGE VERSION:"""
 
 
 class JargonSimplifier:
@@ -38,12 +38,12 @@ class JargonSimplifier:
             self.llm = ChatOllama(
                 model=settings.OLLAMA_MODEL,
                 base_url=settings.OLLAMA_BASE_URL,
-                temperature=0.3,
+                temperature=0.1,
             )
         elif settings.OPENAI_API_KEY:
             self.llm = ChatOpenAI(
                 model=settings.OPENAI_MODEL,
-                temperature=0.3,
+                temperature=0.1,
                 api_key=settings.OPENAI_API_KEY,
             )
         else:

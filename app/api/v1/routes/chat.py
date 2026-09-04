@@ -2,6 +2,8 @@
 Chat Routes — Handles user messages, conversation history, and AI responses.
 """
 
+import re
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -64,8 +66,9 @@ async def get_conversation(conversation_id: str, db: AsyncSession = Depends(get_
 
     response = ConversationWithMessages.model_validate(conversation)
 
-    # Strip the internal clarification marker before returning history.
+    # Strip the internal clarification marker (e.g. [[CLARIFY:fever:2]]) before
+    # returning history so it never appears in the UI.
     for msg in response.messages:
-        msg.content = msg.content.replace("[[CLARIFY]]", "")
+        msg.content = re.sub(r"\[\[CLARIFY:[^\]]*\]\]", "", msg.content)
 
     return response
