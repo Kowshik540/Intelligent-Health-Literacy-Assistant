@@ -38,6 +38,24 @@ QUESTION: {question}
 ANSWER:"""
 
 
+# Fallback prompt used when no verified document covers the question.
+# The assistant still answers from general medical knowledge, but is
+# required to be safe, general, and to recommend professional care.
+GENERAL_KNOWLEDGE_PROMPT = """You are a careful health information assistant. The verified medical documents do not cover this specific question, so answer using well-established, general medical knowledge.
+
+RULES:
+1. Give a helpful, accurate, general explanation that a knowledgeable health educator would give.
+2. Be practical: if the user shares a reading or symptom, explain what it generally means and what is usually advised.
+3. Do NOT diagnose, do NOT prescribe specific drug doses, and do NOT claim certainty about the individual.
+4. Keep the answer under 150 words and use plain, clear language.
+5. Always end by recommending the user confirm with a qualified healthcare professional.
+6. Do NOT invent citations or reference specific documents.
+
+QUESTION: {question}
+
+ANSWER:"""
+
+
 class RAGService:
     """Retrieval-Augmented Generation — searches documents and generates cited answers."""
 
@@ -79,7 +97,40 @@ class RAGService:
             self.llm = None
 
         self.prompt = ChatPromptTemplate.from_template(CLINICAL_RAG_PROMPT)
+        self.general_prompt = ChatPromptTemplate.from_template(GENERAL_KNOWLEDGE_PROMPT)
         self.output_parser = StrOutputParser()
+
+    # Standard disclaimer appended to answers that come from general knowledge
+    # rather than a verified document.
+    GENERAL_DISCLAIMER = (
+        "\n\nNote: This is general health information, not drawn from a specific "
+        "verified document in my library. Please confirm with a qualified "
+        "healthcare professional."
+    )
+
+    # Generates an answer from the model's general medical knowledge when no
+    # verified document covers the question. Marked clearly as general info.
+    async def _general_answer(self, question: str) -> dict:
+        chain = self.general_prompt | self.llm | self.output_parser
+        try:
+            answer = await chain.ainvoke({"question": question})
+        except Exception:
+            return {
+                "answer": (
+                    "I'm having trouble generating a response right now. "
+                    "Please consult a healthcare professional for guidance."
+                ),
+                "sources": [],
+                "citations": [],
+                "is_refusal": True,
+            }
+
+        return {
+            "answer": answer.strip() + self.GENERAL_DISCLAIMER,
+            "sources": [],
+            "citations": [],
+            "from_general_knowledge": True,
+        }
 
     # Words/phrases that indicate a greeting or small-talk rather than a medical question
     GREETING_PATTERNS = {
@@ -168,19 +219,11 @@ class RAGService:
             if score >= self.RELEVANCE_THRESHOLD and not _is_index_chunk(doc)
         ]
 
-        # If no chunks are relevant enough, refuse to answer rather than hallucinate.
-        # No citations are attached because there is no supporting evidence.
+        # If no verified chunk is relevant enough, don't just refuse — fall back
+        # to general medical knowledge so the assistant is still helpful. The
+        # answer is clearly labelled as general information (no citations).
         if not relevant_results:
-            return {
-                "answer": (
-                    "I cannot provide information on this topic. The medical documents "
-                    "in my database do not contain relevant information about your question. "
-                    "Please consult a healthcare professional for guidance."
-                ),
-                "sources": [],
-                "citations": [],
-                "is_refusal": True,
-            }
+            return await self._general_answer(question)
 
         # Step 3: Build context from relevant chunks for the LLM
         context_parts = []
@@ -223,19 +266,11 @@ class RAGService:
                 f"Please ensure the LLM service is running. Error: {str(e)}"
             )
 
-        # If the LLM decided the retrieved text does not actually answer the question
-        # (e.g. it only matched an index or copyright page), treat it as a refusal
-        # and drop the misleading citations.
+        # If the LLM decided the retrieved text does not actually answer the
+        # question (e.g. it only matched an index or copyright page), fall back
+        # to general medical knowledge instead of leaving the user with nothing.
         if "i cannot provide information" in answer.lower():
-            return {
-                "answer": (
-                    "I cannot provide information on this topic based on my verified "
-                    "medical documents. Please consult a healthcare professional."
-                ),
-                "sources": [],
-                "citations": [],
-                "is_refusal": True,
-            }
+            return await self._general_answer(question)
 
         sources = list(set([c["source"] for c in citations]))
 
