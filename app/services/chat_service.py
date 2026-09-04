@@ -165,11 +165,24 @@ class ChatService:
 
         topic, asked_count = _parse_marker(last.content)
 
-        # Gather the original symptom message plus every user reply during the
-        # clarification, oldest first, to build a detailed retrieval query.
-        ordered = list(reversed(recent))
-        gathered = [m.content for m in ordered if m.role == MessageRole.USER]
-        gathered_context = ". ".join(g for g in gathered if g)
+        # Collect ONLY the messages belonging to the current clarification
+        # sequence. Walking newest → oldest, we stop as soon as we hit an
+        # assistant message that is NOT a clarification prompt — that marks
+        # the boundary of an earlier, unrelated exchange.
+        sequence_user_messages = []
+        for msg in recent:
+            if msg.role == MessageRole.ASSISTANT:
+                if CLARIFICATION_MARKER in (msg.content or ""):
+                    continue  # part of this clarification sequence
+                break  # previous unrelated answer — stop here
+            # User message within the current sequence.
+            sequence_user_messages.append(msg.content)
+
+        # Oldest first: the original symptom, then each reply.
+        sequence_user_messages.reverse()
+        gathered_context = ". ".join(
+            g for g in sequence_user_messages if g
+        )
 
         return True, topic, asked_count, gathered_context
 
