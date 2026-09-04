@@ -556,10 +556,12 @@ export default function AssistantPage() {
 
       const hasCitations = Boolean(data.citations?.length);
 
-      // A greeting / assistant intro is conversational, not a medical answer.
+      // A greeting / assistant intro / "please rephrase" prompt is
+      // conversational, not a medical answer — show it plainly.
       const isGreeting =
         lowerAnswer.includes("i'm a health information assistant") ||
-        lowerAnswer.includes("ask me a health question");
+        lowerAnswer.includes("ask me a health question") ||
+        lowerAnswer.includes("understood that as a health question");
 
       // A clarification prompt asks the user for more details.
       const isClarification = lowerAnswer.includes(

@@ -41,15 +41,20 @@ ANSWER:"""
 # Fallback prompt used when no verified document covers the question.
 # The assistant still answers from general medical knowledge, but is
 # required to be safe, general, and to recommend professional care.
+# It must also refuse clearly when the input is not a real health question.
 GENERAL_KNOWLEDGE_PROMPT = """You are a careful health information assistant. The verified medical documents do not cover this specific question, so answer using well-established, general medical knowledge.
 
-RULES:
+FIRST, decide if the user's message is actually a health or medical question.
+- If the message is gibberish, random characters, or clearly NOT about health, medicine, symptoms, conditions, treatments, or wellbeing, reply with EXACTLY this and nothing else: NOT_A_HEALTH_QUESTION
+
+Otherwise, answer using these RULES:
 1. Give a helpful, accurate, general explanation that a knowledgeable health educator would give.
 2. Be practical: if the user shares a reading or symptom, explain what it generally means and what is usually advised.
 3. Do NOT diagnose, do NOT prescribe specific drug doses, and do NOT claim certainty about the individual.
-4. Keep the answer under 150 words and use plain, clear language.
-5. Always end by recommending the user confirm with a qualified healthcare professional.
-6. Do NOT invent citations or reference specific documents.
+4. Do NOT invent a symptom the user did not mention.
+5. Keep the answer under 150 words in plain, clear language.
+6. Always end by recommending the user confirm with a qualified healthcare professional.
+7. Do NOT invent citations or reference specific documents.
 
 QUESTION: {question}
 
@@ -108,8 +113,17 @@ class RAGService:
         "healthcare professional."
     )
 
+    # Polite response when the input is not a valid health question.
+    NOT_A_QUESTION_REPLY = (
+        "I'm not sure I understood that as a health question. I'm a health "
+        "information assistant — try asking about a symptom, condition, "
+        "medicine, or general wellbeing, and I'll do my best to help."
+    )
+
     # Generates an answer from the model's general medical knowledge when no
     # verified document covers the question. Marked clearly as general info.
+    # If the input is not a real health question, returns a polite prompt to
+    # rephrase instead of fabricating an answer.
     async def _general_answer(self, question: str) -> dict:
         chain = self.general_prompt | self.llm | self.output_parser
         try:
@@ -123,6 +137,15 @@ class RAGService:
                 "sources": [],
                 "citations": [],
                 "is_refusal": True,
+            }
+
+        # The model flags non-health / nonsensical input so we don't hallucinate.
+        if "not_a_health_question" in answer.strip().lower():
+            return {
+                "answer": self.NOT_A_QUESTION_REPLY,
+                "sources": [],
+                "citations": [],
+                "not_a_question": True,
             }
 
         return {
