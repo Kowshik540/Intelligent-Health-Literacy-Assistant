@@ -4,7 +4,7 @@ Application Entry Point
 FastAPI application factory with lifespan management.
 Handles startup (database init, model pre-loading) and shutdown (cleanup).
 
-Run: uvicorn app.main:app --host 0.0.0.0 --port 8003
+Run: uvicorn app.main:app --host 0.0.0.0 --port 8000
 """
 
 import os
@@ -35,32 +35,56 @@ async def lifespan(app: FastAPI):
     from app.core.database import Base, AsyncSessionLocal
     from app.models import User, Conversation, Message, Document, Feedback
 
-    # Create all tables (idempotent — skips if they exist)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Create tables and seed the demo user. Wrapped so a transient database
+    # issue is reported clearly instead of silently crashing the whole app.
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
-    # Seed default user for demo/development
-    async with AsyncSessionLocal() as session:
-        from sqlalchemy import select
-        result = await session.execute(
-            select(User).where(User.id == "default-user-001")
-        )
-        if not result.scalar_one_or_none():
-            default_user = User(
-                id="default-user-001",
-                username="demo_user",
-                email="demo@healthassistant.local",
+        async with AsyncSessionLocal() as session:
+            from sqlalchemy import select
+            result = await session.execute(
+                select(User).where(User.id == "default-user-001")
             )
-            session.add(default_user)
-            await session.commit()
+            if not result.scalar_one_or_none():
+                default_user = User(
+                    id="default-user-001",
+                    username="demo_user",
+                    email="demo@healthassistant.local",
+                )
+                session.add(default_user)
+                await session.commit()
+    except Exception as e:
+        print(f"[WARNING] Database initialization failed: {e}")
+        print("          Check DATABASE_URL in your .env (SQLite works with no setup).")
 
-    # Pre-load embedding model so first request is fast (~20s saved)
-    from app.services.chat_service import _get_rag_service
-    _get_rag_service()
+    # Pre-load embedding model so the first request is fast. Non-fatal if it
+    # fails — the model will simply load on the first request instead.
+    try:
+        from app.services.chat_service import _get_rag_service
+        _get_rag_service()
+    except Exception as e:
+        print(f"[WARNING] Could not pre-load the embedding model: {e}")
 
-    print(f"Starting {settings.APP_NAME}...")
-    print(f"LLM: {settings.OLLAMA_MODEL} (Ollama)" if settings.USE_OLLAMA else f"LLM: {settings.OPENAI_MODEL}")
-    print(f"Database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL}")
+    # Clear startup banner so testers immediately know how it is configured.
+    db_label = (
+        settings.DATABASE_URL.split("@")[-1]
+        if "@" in settings.DATABASE_URL
+        else settings.DATABASE_URL
+    )
+    print("=" * 60)
+    print(f"  {settings.APP_NAME}")
+    print(f"  API:      http://localhost:{settings.PORT}")
+    print(f"  Docs:     http://localhost:{settings.PORT}/docs")
+    if settings.USE_OLLAMA:
+        print(f"  LLM:      Ollama '{settings.OLLAMA_MODEL}' at {settings.OLLAMA_BASE_URL}")
+        print(f"            (run: ollama pull {settings.OLLAMA_MODEL})")
+    elif settings.OPENAI_API_KEY:
+        print(f"  LLM:      OpenAI '{settings.OPENAI_MODEL}'")
+    else:
+        print("  LLM:      NONE configured — set USE_OLLAMA or OPENAI_API_KEY")
+    print(f"  Database: {db_label}")
+    print("=" * 60)
 
     yield
 
@@ -78,11 +102,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allows frontend (React) to communicate with backend
+# CORS — allows the frontend (any host/port) to talk to the backend.
+# allow_credentials is False because we don't use cookies; this makes the
+# wildcard origin valid (browsers reject "*" combined with credentials).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

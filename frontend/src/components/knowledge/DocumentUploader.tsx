@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { apiUrl } from "../../config";
 
 type BackendDocument = {
   id: string;
@@ -33,7 +34,7 @@ export default function DocumentUploader() {
 
     try {
       const response = await axios.get<DocumentsResponse>(
-        "http://localhost:8000/api/v1/documents"
+        apiUrl("/documents")
       );
 
       const verified = response.data.documents.filter(
@@ -87,7 +88,7 @@ export default function DocumentUploader() {
   }, [documents, search]);
 
   const pdfUrl = selectedDocument
-    ? `http://localhost:8000/api/v1/documents/${selectedDocument.id}/file`
+    ? apiUrl(`/documents/${selectedDocument.id}/file`)
     : "";
 
   return (

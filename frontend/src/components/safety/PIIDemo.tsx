@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { apiUrl } from "../../config";
 
 type SafetyResponse = {
   is_safe: boolean;
@@ -31,7 +32,7 @@ export default function PIIDemo() {
 
     try {
       const response = await axios.post<SafetyResponse>(
-        "http://localhost:8000/api/v1/safety/check",
+        apiUrl("/safety/check"),
         {
           text: text,
         }

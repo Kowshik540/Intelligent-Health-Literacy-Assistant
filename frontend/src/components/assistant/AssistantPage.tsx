@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import type { Message, ApiResponse } from "../../types";
+import { apiUrl } from "../../config";
 
 type SpeechRecognitionResultItem = {
   transcript: string;
@@ -120,7 +121,7 @@ export default function AssistantPage() {
 
     try {
       const result = await axios.get<BackendConversation[]>(
-        "http://localhost:8000/api/v1/chat/conversations"
+        apiUrl("/chat/conversations")
       );
       setConversations(result.data);
     } catch (error) {
@@ -139,7 +140,7 @@ export default function AssistantPage() {
 
     try {
       const result = await axios.get<BackendConversationWithMessages>(
-        `http://localhost:8000/api/v1/chat/conversations/${id}`
+        apiUrl(`/chat/conversations/${id}`)
       );
 
       const data = result.data;
@@ -335,7 +336,7 @@ export default function AssistantPage() {
     if (rating === "down" && !feedbackType) return;
 
     try {
-      await axios.post("http://localhost:8000/api/v1/feedback/", {
+      await axios.post(apiUrl("/feedback/"), {
         message_id: response.message_id,
         conversation_id: response.conversation_id,
         is_positive: rating === "up",
@@ -473,7 +474,7 @@ export default function AssistantPage() {
 
     try {
       const result = await axios.post<BackendChatResponse>(
-        "http://localhost:8000/api/v1/chat/",
+        apiUrl("/chat/"),
         {
           message: trimmed,
           ...(conversationId ? { conversation_id: conversationId } : {}),

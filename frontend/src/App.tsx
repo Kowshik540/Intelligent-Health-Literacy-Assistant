@@ -11,6 +11,7 @@ import Header from "./components/layout/Header";
 import PIIDemo from "./components/safety/PIIDemo";
 
 import type { Page } from "./types";
+import { apiUrl } from "./config";
 
 import "./App.css";
 
@@ -162,7 +163,7 @@ function KnowledgePage() {
 
     try {
       const response = await axios.get<DocumentsResponse>(
-        "http://localhost:8000/api/v1/documents"
+        apiUrl("/documents")
       );
 
       const verifiedDocuments = response.data.documents.filter(

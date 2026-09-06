@@ -1,164 +1,130 @@
+"""
+Seed script — builds the knowledge base from scratch.
+
+Run this once after cloning the project (or whenever you add new source files):
+
+    python seed_documents.py
+
+What it does:
+1. Reads every .txt document in the ./data folder.
+2. Chunks and embeds each one into ChromaDB (the vector store used for retrieval).
+3. Registers a matching, admin-approved Document record in the database.
+
+This makes the project fully portable: a fresh clone can regenerate the entire
+vector store with a single command — no pre-built data needs to be committed.
+"""
+
 import asyncio
 import os
+from datetime import datetime
 
 from sqlalchemy import select
 
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, Base, engine
 from app.models.document import Document
-from app.services.document_validation_service import DocumentValidationService
+from app.services.ingestion_service import IngestionService
 from app.services.rag_service import RAGService
 
 
-SAMPLE_DOCS_DIR = "./sample_docs"
+DATA_DIR = "./data"
 
 
-async def get_chroma_chunk_count(rag_service: RAGService, filename: str) -> int:
-    """Return the number of existing ChromaDB chunks for this document."""
+# Ensures the database tables exist before we insert Document records.
+async def _ensure_tables():
+    from app.models import User, Conversation, Message, Document, Feedback  # noqa
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+# Counts how many chunks for this filename already exist in ChromaDB.
+def _existing_chunk_count(rag: RAGService, filename: str) -> int:
     try:
-        result = rag_service.vector_store.get(
-            where={"source": filename},
-            include=[],
-        )
-
+        result = rag.vector_store.get(where={"source": filename}, include=[])
         return len(result.get("ids", []))
-
-    except Exception as e:
-        print(f"  ⚠ Could not read ChromaDB: {e}")
+    except Exception:
         return 0
 
 
 async def seed():
-    """
-    Register already-indexed knowledge documents in PostgreSQL.
-
-    IMPORTANT:
-    This does NOT re-index the PDFs.
-    It only creates the missing Document records.
-    """
-
-    if not os.path.exists(SAMPLE_DOCS_DIR):
-        print(f"ERROR: {SAMPLE_DOCS_DIR} directory not found")
+    if not os.path.isdir(DATA_DIR):
+        print(f"ERROR: '{DATA_DIR}' folder not found.")
         return
 
-    files = [
-        f
-        for f in os.listdir(SAMPLE_DOCS_DIR)
-        if f.lower().endswith((".pdf", ".txt"))
-    ]
+    files = [f for f in os.listdir(DATA_DIR) if f.lower().endswith(".txt")]
 
     if not files:
-        print(f"No documents found in {SAMPLE_DOCS_DIR}/")
+        print(f"No .txt documents found in '{DATA_DIR}'.")
         return
 
-    print(f"Found {len(files)} documents")
+    print("=" * 60)
+    print(f"Seeding knowledge base from {len(files)} document(s) in '{DATA_DIR}'")
     print("=" * 60)
 
-    validator = DocumentValidationService()
-    rag_service = RAGService()
+    await _ensure_tables()
 
-    created = 0
-    skipped = 0
+    ingestion = IngestionService()
+    rag = ingestion.rag_service
 
-    async with AsyncSessionLocal() as db:
+    indexed = 0
 
-        for filename in sorted(files):
+    async with AsyncSessionLocal() as session:
+        for filename in files:
+            file_path = os.path.join(DATA_DIR, filename)
 
-            print(f"\nChecking: {filename}")
+            # Skip if this document is already indexed in ChromaDB.
+            if _existing_chunk_count(rag, filename) > 0:
+                print(f"  - {filename}: already indexed, skipping")
+                continue
 
-            # Check whether PostgreSQL already has this document
-            result = await db.execute(
+            print(f"  - {filename}: indexing...")
+            result = await ingestion.process_text_file(file_path, filename)
+
+            if result["status"] != "completed":
+                print(f"      FAILED: {result.get('error')}")
+                continue
+
+            chunk_count = result["chunk_count"]
+            print(f"      indexed {chunk_count} chunks")
+
+            # Register (or update) the Document record so it appears as a
+            # trusted, approved source in the Knowledge view.
+            existing = await session.execute(
                 select(Document).where(Document.filename == filename)
             )
+            doc = existing.scalar_one_or_none()
 
-            existing = result.scalar_one_or_none()
-
-            if existing:
-                print(
-                    f"  ✓ Already registered "
-                    f"(status={existing.status}, chunks={existing.chunk_count})"
-                )
-                skipped += 1
-                continue
-
-            filepath = os.path.join(SAMPLE_DOCS_DIR, filename)
-
-            try:
-                with open(filepath, "rb") as f:
-                    content = f.read()
-            except Exception as e:
-                print(f"  ❌ Could not read file: {e}")
-                continue
-
-            # Validate PDF
-            if filename.lower().endswith(".pdf"):
-                validation = validator.validate_document(
+            if doc is None:
+                doc = Document(
                     filename=filename,
-                    content_type="application/pdf",
-                    file_content=content,
+                    file_type="txt",
+                    file_size=os.path.getsize(file_path),
+                    description="Seeded trusted health guideline",
+                    status="completed",
+                    chunk_count=chunk_count,
+                    source_trusted=True,
+                    publisher="World Health Organization",
+                    admin_approved=True,
+                    approved_by="seed",
+                    approved_at=datetime.utcnow(),
+                    processed_at=datetime.utcnow(),
+                    validation_notes="Seeded from ./data — trusted source",
                 )
+                session.add(doc)
             else:
-                validation = {
-                    "valid": True,
-                    "file_hash": None,
-                    "publisher": "WHO / Verified Medical Reference",
-                    "isbn_reference": None,
-                    "source_trusted": True,
-                    "validation_notes": "Verified knowledge document",
-                }
+                doc.status = "completed"
+                doc.chunk_count = chunk_count
+                doc.source_trusted = True
+                doc.admin_approved = True
 
-            if not validation["valid"]:
-                print(
-                    f"  ❌ Validation failed: "
-                    f"{validation.get('error', 'Unknown error')}"
-                )
-                continue
+            indexed += 1
 
-            # IMPORTANT:
-            # Read existing chunks from ChromaDB.
-            # We are NOT adding them again.
-            chunk_count = await get_chroma_chunk_count(
-                rag_service,
-                filename,
-            )
+        await session.commit()
 
-            if chunk_count == 0:
-                print("  ⚠ No ChromaDB chunks found — skipped")
-                continue
-
-            # Create PostgreSQL record
-            document = Document(
-                filename=filename,
-                file_type="pdf",
-                file_size=len(content),
-                status="completed",
-                description="Verified medical knowledge source",
-                file_hash=validation.get("file_hash"),
-                publisher=validation.get("publisher"),
-                isbn_reference=validation.get("isbn_reference"),
-                source_trusted=validation.get("source_trusted", True),
-                validation_notes=validation.get("validation_notes"),
-                admin_approved=True,
-                approved_by="system",
-                chunk_count=chunk_count,
-            )
-
-            db.add(document)
-            await db.flush()
-
-            print("  ✅ Registered in PostgreSQL")
-            print(f"     ChromaDB chunks: {chunk_count}")
-            print(f"     Trusted: {document.source_trusted}")
-            print(f"     Status: {document.status}")
-
-            created += 1
-
-        await db.commit()
-
-    print("\n" + "=" * 60)
-    print("DATABASE REGISTRATION COMPLETE")
-    print(f"New documents registered: {created}")
-    print(f"Already registered:       {skipped}")
     print("=" * 60)
+    print(f"Done. {indexed} document(s) newly indexed into ChromaDB.")
+    print("=" * 60)
+
+    await engine.dispose()
 
 
 if __name__ == "__main__":

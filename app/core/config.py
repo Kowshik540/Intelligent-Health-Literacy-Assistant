@@ -23,7 +23,10 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
-    # --- Database (PostgreSQL) ---
+    # --- Database ---
+    # Defaults to SQLite so the app runs with ZERO setup (no DB server needed).
+    # To use PostgreSQL, set DATABASE_URL in .env, e.g.:
+    #   postgresql://user:password@localhost:5432/healthcare_db
     DATABASE_URL: str = "sqlite:///./healthcare.db"
 
     # --- LLM Configuration ---
