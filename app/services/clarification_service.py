@@ -34,6 +34,7 @@ class ClarificationService:
         "headache": [
             "How long have you had the headache — hours, days, or weeks?",
             "How would you rate the pain from 1 to 10?",
+            "Do you know your current blood pressure reading? (high blood pressure can cause headaches)",
             "Do you have any other symptoms such as fever, vision changes, or nausea?",
         ],
         "fever": [
@@ -73,13 +74,30 @@ class ClarificationService:
         ],
     }
 
+    # Alternate spellings / phrasings mapped to their canonical topic above.
+    # This catches "head ache", "headaches", "stomach ache", "loose motion", etc.
+    SYMPTOM_SYNONYMS = {
+        "headache": ["headache", "head ache", "head-ache", "headaches", "migraine"],
+        "fever": ["fever", "temperature", "high temp", "feverish"],
+        "chest": ["chest pain", "chest", "chest tightness"],
+        "cough": ["cough", "coughing"],
+        "stomach": [
+            "stomach", "stomach ache", "stomach pain", "tummy",
+            "abdominal", "abdomen", "belly",
+        ],
+        "dizzy": ["dizzy", "dizziness", "lightheaded", "light headed", "giddy"],
+        "tired": ["tired", "fatigue", "fatigued", "weakness", "exhausted"],
+        "pain": ["body pain", "body ache", "pain"],
+    }
+
     # First-person phrasing that signals the user is describing THEIR OWN symptom.
     PERSONAL_MARKERS = [
         r"\bi\s+(have|have\s+a|am\s+having|'?m\s+having|feel|'?m\s+feeling|got|'?ve\s+got|'?ve\s+been)\b",
         r"\bi\s+am\b",
         r"\bmy\s+(head|chest|stomach|throat|body|back)\b",
         r"\bi'?m\b",
-        r"\bhaving\s+(a\s+)?(headache|fever|cough|pain)\b",
+        r"\bhaving\s+(a\s+)?(head\s*ache|headache|fever|cough|pain)\b",
+        r"\bi\s+got\b",
     ]
 
     # Phrasing that signals a definition / general-knowledge question (never clarified).
@@ -97,13 +115,19 @@ class ClarificationService:
         r"\bmeaning\s+of\b",
     ]
 
-    # Detects the symptom topic in the user's message, if any.
+    # Detects the symptom topic in the user's message, matching common
+    # spelling and phrasing variants (e.g. "head ache" -> "headache").
     def _detect_topic(self, message: str) -> Optional[str]:
         text = message.lower()
-        for topic in self.SYMPTOM_QUESTIONS:
-            if topic in text:
-                return topic
-        return None
+        # Check the more specific synonyms first (longest phrases win).
+        best_topic = None
+        best_len = 0
+        for topic, phrases in self.SYMPTOM_SYNONYMS.items():
+            for phrase in phrases:
+                if phrase in text and len(phrase) > best_len:
+                    best_topic = topic
+                    best_len = len(phrase)
+        return best_topic
 
     # True when the message is phrased as a definition / general question.
     def _is_definition_question(self, message: str) -> bool:
