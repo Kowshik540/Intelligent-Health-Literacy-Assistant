@@ -1,12 +1,4 @@
-"""
-Chat Service — Main orchestrator for the entire query processing pipeline.
-
-Coordinates:
-Guardrails → RAG Retrieval → LLM Generation → Simplification
-→ Validation → Persistence
-
-This is the "brain" of the application — every user message flows through here.
-"""
+"""Orchestrates a chat turn: guardrails, triage, RAG, simplification, persistence."""
 
 from typing import Optional
 import re
@@ -61,10 +53,6 @@ def clean_display_text(text: str) -> str:
     return cleaned.strip()
 
 
-# ============================================================
-# SHARED RAG SERVICE
-# ============================================================
-
 # Embedding model loads once and is reused across requests.
 _rag_singleton = None
 
@@ -82,10 +70,6 @@ def _get_rag_service():
 
 class ChatService:
     """Orchestrates the complete health-question processing pipeline."""
-
-    # ============================================================
-    # INITIALIZATION
-    # ============================================================
 
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -111,10 +95,6 @@ class ChatService:
             self._simplifier = JargonSimplifier()
 
         return self._simplifier
-
-    # ============================================================
-    # CONVERSATION MANAGEMENT
-    # ============================================================
 
     async def get_or_create_conversation(
         self,
@@ -146,10 +126,6 @@ class ChatService:
         await self.db.flush()
 
         return conversation
-
-    # ============================================================
-    # CLARIFICATION STATE
-    # ============================================================
 
     async def _clarification_state(
         self,
@@ -210,10 +186,6 @@ class ChatService:
 
         return True, topic, asked_count, gathered_context
 
-    # ============================================================
-    # SESSION MEMORY (longitudinal, multi-turn)
-    # ============================================================
-
     async def _gather_session_history(
         self,
         conversation_id: Optional[str],
@@ -273,20 +245,12 @@ class ChatService:
             return True
         return False
 
-    # ============================================================
-    # MAIN MESSAGE PIPELINE
-    # ============================================================
-
     async def process_message(
         self,
         user_id: str,
         message: str,
         conversation_id: Optional[str] = None,
     ) -> dict:
-
-        # ========================================================
-        # STEP 1 — SAFETY GUARDRAILS
-        # ========================================================
 
         guardrail_result = self._guardrails.check_query(message)
 
@@ -330,16 +294,8 @@ class ChatService:
                 "simplified_answer": guardrail_result.refusal_message,
             }
 
-        # ========================================================
-        # STEP 2 — SANITIZED QUERY
-        # ========================================================
-
         sanitized_query = guardrail_result.sanitized_query
 
-        # ========================================================
-        # SESSION MEMORY — remember vitals/symptoms from earlier turns
-        # ========================================================
-        #
         # Pull the patient's prior messages so a symptom reported now is
         # assessed against vitals/demographics they gave earlier (e.g. an
         # "8/10 headache" now, with "BP 110/60, age 50" from before).
@@ -351,10 +307,6 @@ class ChatService:
             else sanitized_query
         )
 
-        # ========================================================
-        # STAGE 1/2 (early pass) — TRIAGE + BIOMETRICS (with memory)
-        # ========================================================
-        #
         # Safety-critical ordering: a CRITICAL red flag (stroke signs,
         # thunderclap headache, hypertensive crisis, low SpO2, etc.) MUST
         # escalate immediately and must NOT be delayed by the clarification
@@ -381,10 +333,6 @@ class ChatService:
                 med_seeking=self._is_medication_seeking(synthesized_now),
             )
 
-        # ========================================================
-        # STEP 2b — AGENTIC CLARIFICATION (one question at a time)
-        # ========================================================
-        #
         # If the user reports a personal symptom, gather details one
         # question at a time before answering. Definition questions
         # ("what is diabetes") are answered directly.
@@ -457,15 +405,9 @@ class ChatService:
             # Anchor it to what the patient said earlier in the session.
             retrieval_query = f"{session_history} {sanitized_query}".strip()
 
-        # ========================================================
-        # STAGE 1 — CLINICAL TRIAGE & RED-FLAG (deterministic)
-        # STAGE 2 — BIOMETRIC PARSING & EVALUATION (deterministic)
-        # ========================================================
-        #
-        # Both run on the full available context — the current message, any
-        # clarification answers, AND the remembered session history — so
-        # numbers and red flags from earlier turns are synthesized, not lost.
-
+        # Run triage + biometrics on the full context (current message,
+        # clarification answers, and session history) so red flags from
+        # earlier turns aren't lost.
         synthesis_context = retrieval_query
         if session_history and session_history not in retrieval_query:
             synthesis_context = f"{session_history} | {retrieval_query}".strip(" |")
@@ -504,10 +446,6 @@ class ChatService:
         deterministic_context = biometrics.as_prompt_context()
         acuity_context = triage.as_prompt_context()
 
-        # ========================================================
-        # STAGE 3 — RAG RETRIEVAL + CLINICAL ANSWER (synthesizer)
-        # ========================================================
-
         rag_response = await self.rag_service.get_response(
             question=retrieval_query,
             conversation_id=conversation_id,
@@ -519,10 +457,6 @@ class ChatService:
         # verified documents in ChromaDB.
         clinical_answer = rag_response["answer"]
 
-        # ========================================================
-        # STAGE 4 — OUTPUT GUARDRAIL & VERIFICATION (deterministic)
-        # ========================================================
-        #
         # Audit the generated answer against the deterministic biometric
         # classifications and triage acuity. If it contradicts the numbers or
         # downplays a high-acuity symptom, regenerate once; if it still fails,
@@ -539,41 +473,16 @@ class ChatService:
             triage=triage,
         )
 
-        # ========================================================
-        # STEP 4 — VERIFY / ADD CITATIONS
-        # ========================================================
-
         clinical_answer = self._verify_citations(
             clinical_answer,
             rag_response.get("citations", []),
         )
 
-        # ========================================================
-        # STEP 5 — CREATE PLAIN-LANGUAGE ANSWER
-        # ========================================================
-
-        # IMPORTANT:
-        # We remove citation metadata before sending the text
-        # to the simplifier. This prevents citation strings from
-        # affecting the simplification process.
-        clinical_content = self._remove_citations(
-            clinical_answer
-        )
-
-        simplified_content = await self.simplifier.simplify(
-            clinical_content
-        )
-
-        # Clean accidental citation tags produced by the
-        # simplifier. We will restore the original citations
-        # ourselves.
-        simplified_content = self._remove_citations(
-            simplified_content
-        ).strip()
-
-        # ========================================================
-        # STEP 6 — VALIDATE SIMPLIFICATION
-        # ========================================================
+        # Strip citations before simplifying so they don't skew the rewrite;
+        # we re-attach the originals afterwards.
+        clinical_content = self._remove_citations(clinical_answer)
+        simplified_content = await self.simplifier.simplify(clinical_content)
+        simplified_content = self._remove_citations(simplified_content).strip()
 
         simplified_answer = await self._validate_simplification(
             clinical=clinical_content,
@@ -581,10 +490,6 @@ class ChatService:
             citations=self._extract_citations(clinical_answer),
         )
 
-        # ========================================================
-        # STEP 6b — PREPEND DRUG-INTERACTION WARNING (deterministic)
-        # ========================================================
-        #
         # If a high-risk medication combination was detected across the
         # session, surface an authoritative warning at the top of the answer
         # (the LLM cannot be trusted to catch these reliably).
@@ -593,10 +498,6 @@ class ChatService:
             warning_block = interaction_result.as_warning_block()
             clinical_answer = f"{warning_block}\n\n{clinical_answer}".strip()
             simplified_answer = f"{warning_block}\n\n{simplified_answer}".strip()
-
-        # ========================================================
-        # STEP 7 — SAVE CONVERSATION
-        # ========================================================
 
         conversation = await self.get_or_create_conversation(
             user_id=user_id,
@@ -628,10 +529,6 @@ class ChatService:
 
         await self.db.flush()
 
-        # ========================================================
-        # STEP 8 — RETURN BOTH VERSIONS
-        # ========================================================
-
         return {
             "conversation_id": conversation.id,
             "message": ai_msg,
@@ -659,10 +556,6 @@ class ChatService:
             # so they only appear as sidebar cards.
             "simplified_answer": clean_display_text(simplified_answer),
         }
-
-    # ============================================================
-    # STAGE 1 — CRITICAL ESCALATION MESSAGE
-    # ============================================================
 
     def _build_escalation_message(self, triage, biometrics, med_seeking: bool = False) -> str:
         """
@@ -772,10 +665,6 @@ class ChatService:
             "simplified_answer": escalation,
         }
 
-    # ============================================================
-    # STAGE 4 — VERIFY & CORRECT THE CLINICAL ANSWER
-    # ============================================================
-
     async def _verify_and_correct(
         self,
         answer: str,
@@ -824,10 +713,6 @@ class ChatService:
             )
         notice = " ".join(notice_parts).strip()
         return f"{notice}\n\n{answer}".strip() if notice else answer
-
-    # ============================================================
-    # CITATION VERIFICATION
-    # ============================================================
 
     def _verify_citations(
         self,
@@ -884,10 +769,6 @@ class ChatService:
         deduped = re.sub(r";\s*$", "", deduped.strip())
         return deduped.strip()
 
-    # ============================================================
-    # CITATION EXTRACTION
-    # ============================================================
-
     def _extract_citations(
         self,
         text: str,
@@ -918,10 +799,6 @@ class ChatService:
                 unique.append(c.strip())
         return unique
 
-    # ============================================================
-    # REMOVE CITATIONS
-    # ============================================================
-
     def _remove_citations(
         self,
         text: str,
@@ -938,10 +815,6 @@ class ChatService:
             text,
             flags=re.IGNORECASE,
         ).strip()
-
-    # ============================================================
-    # SIMPLIFICATION VALIDATION
-    # ============================================================
 
     async def _validate_simplification(
         self,
@@ -966,10 +839,6 @@ class ChatService:
         """
 
         SIMILARITY_THRESHOLD = 0.85
-
-        # --------------------------------------------------------
-        # Cosine similarity
-        # --------------------------------------------------------
 
         def cosine_similarity(
             text_a: str,
@@ -1031,20 +900,12 @@ class ChatService:
                     / len(words_a | words_b)
                 )
 
-        # --------------------------------------------------------
-        # Start with the generated simplified answer
-        # --------------------------------------------------------
-
         current_simplified = simplified.strip()
 
         # If the simplifier returned nothing, retry.
         if not current_simplified:
 
             current_simplified = clinical
-
-        # --------------------------------------------------------
-        # Validation / retry loop
-        # --------------------------------------------------------
 
         for attempt in range(max_retries):
 
@@ -1083,39 +944,19 @@ class ChatService:
                 except Exception:
                     pass
 
-        # --------------------------------------------------------
-        # IMPORTANT FALLBACK BEHAVIOR
-        # --------------------------------------------------------
-        #
-        # Previously this returned:
-        #
-        #     return clinical
-        #
-        # That made Clinical and Plain Language identical
-        # whenever the similarity score was below 0.85.
-        #
-        # Now we keep the generated plain-language answer.
-        # The validation threshold is still calculated and
-        # retries are still attempted.
-        # --------------------------------------------------------
-
+        # Keep the generated plain-language answer even if it fell below the
+        # similarity threshold — retries were already attempted above.
         if current_simplified:
-
             return self._append_citations(
                 current_simplified,
                 citations,
             )
 
-        # Absolute safety fallback only if the simplifier
-        # produced no usable text at all.
+        # Only fall back to the clinical text if the simplifier produced nothing.
         return self._append_citations(
             clinical,
             citations,
         )
-
-    # ============================================================
-    # APPEND ORIGINAL CITATIONS
-    # ============================================================
 
     def _append_citations(
         self,
@@ -1134,10 +975,6 @@ class ChatService:
 
         return f"{answer}\n\n{citation_block}"
 
-    # ============================================================
-    # CONVERSATION HISTORY
-    # ============================================================
-
     async def get_conversation_history(
         self,
         conversation_id: str,
@@ -1150,10 +987,6 @@ class ChatService:
         )
 
         return result.scalar_one_or_none()
-
-    # ============================================================
-    # USER CONVERSATIONS
-    # ============================================================
 
     async def get_user_conversations(
         self,

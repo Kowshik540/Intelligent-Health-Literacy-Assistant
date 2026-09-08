@@ -23,10 +23,6 @@ from app.services.ingestion_service import IngestionService
 router = APIRouter(tags=["Documents"])
 
 
-# ============================================================
-# DOCUMENT UPLOAD
-# ============================================================
-
 @router.post("/ingest")
 async def ingest_document(
     file: UploadFile = File(..., description="Medical PDF to upload"),
@@ -89,10 +85,6 @@ async def ingest_document(
         "validation_notes": doc.validation_notes,
     }
 
-
-# ============================================================
-# ADMIN APPROVAL
-# ============================================================
 
 @router.post("/ingest/approve/{document_id}")
 async def approve_document(
@@ -165,10 +157,6 @@ async def approve_document(
     }
 
 
-# ============================================================
-# SOURCE METADATA
-# ============================================================
-
 @router.get("/sources/{document_id}")
 async def get_source(
     document_id: str,
@@ -197,10 +185,6 @@ async def get_source(
         "file_hash": doc.file_hash,
     }
 
-
-# ============================================================
-# LIST VERIFIED DOCUMENTS
-# ============================================================
 
 @router.get("/documents")
 async def list_documents(
@@ -234,10 +218,6 @@ async def list_documents(
         ],
     }
 
-
-# ============================================================
-# VIEW ORIGINAL VERIFIED DOCUMENT
-# ============================================================
 
 @router.get("/documents/{document_id}/file")
 async def get_document_file(
@@ -276,7 +256,6 @@ async def get_document_file(
 
     filename = doc.filename
 
-    # --------------------------------------------------------
     # Look for the original document.
     #
     # Seeded documents:
@@ -284,7 +263,6 @@ async def get_document_file(
     #
     # Uploaded documents:
     #     ./uploads/<document_id>.pdf
-    # --------------------------------------------------------
 
     # Seeded documents originate from ./data; a copy may also live in
     # ./sample_docs. Uploaded documents are stored as ./uploads/<id>.pdf.
@@ -308,10 +286,6 @@ async def get_document_file(
             ),
         )
 
-    # --------------------------------------------------------
-    # PDF
-    # --------------------------------------------------------
-
     if filename.lower().endswith(".pdf"):
         return FileResponse(
             path=file_path,
@@ -319,10 +293,6 @@ async def get_document_file(
             filename=filename,
             content_disposition_type="inline",
         )
-
-    # --------------------------------------------------------
-    # TXT
-    # --------------------------------------------------------
 
     if filename.lower().endswith(".txt"):
         try:

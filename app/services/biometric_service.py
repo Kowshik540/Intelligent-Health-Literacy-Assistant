@@ -1,26 +1,10 @@
 """
-Biometric Parsing & Deterministic Evaluation (Stage 2)
-======================================================
-DETERMINISTIC vital-sign classifier — pure Python, NO LLM.
+Parses vital signs from free text (BP, temperature, HR, SpO2, glucose) and
+classifies them against fixed clinical thresholds.
 
-This is the fix for the core failure mode: an LLM used as a calculator will
-happily label 110/60 mmHg as "hypertension" or a 98.6°F temperature as "fever".
-Numeric classification must be done by code with explicit, auditable thresholds.
-
-What it does
-------------
-1. Parses vital signs from free text: blood pressure, body temperature,
-   heart rate, oxygen saturation (SpO2), and blood glucose.
-2. Classifies each against well-established clinical thresholds
-   (e.g. ACC/AHA blood-pressure categories).
-3. Emits:
-     * a machine + human readable list of classifications, injected into the
-       RAG synthesizer prompt as the DETERMINISTIC OVERRIDE the LLM must respect;
-     * any critical biometric red flags (e.g. hypertensive crisis, SpO2 < 90)
-       that should raise the triage acuity.
-
-The LLM is explicitly forbidden (via the prompt and the output verifier) from
-recomputing or contradicting these values.
+Done in code, not the LLM: a model used as a calculator will happily call
+110/60 "hypertension". The classifications feed the generation prompt, and
+critical readings (e.g. hypertensive crisis, SpO2 < 90) raise the triage acuity.
 """
 
 from __future__ import annotations

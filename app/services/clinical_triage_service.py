@@ -1,25 +1,12 @@
-"""
-Clinical Triage & Red-Flag Service (Stage 1)
-============================================
-DETERMINISTIC acuity classifier — pure Python, NO LLM.
+"""Rule-based triage: detects red-flag symptoms and assigns an acuity level.
 
-Why deterministic?
-------------------
-Triage decisions must be predictable and auditable. A small local LLM should
-never be trusted to decide whether an 8/10 headache is an emergency. This
-service uses explicit rules to detect red-flag symptoms and assign an acuity
-level, so the gatekeeping logic is reproducible and cannot "hallucinate".
+Deterministic on purpose — we don't trust the LLM to decide whether a symptom
+is an emergency. Runs before retrieval; the result gates escalation and feeds
+the generation prompt.
 
-It runs BEFORE retrieval/generation. Its output (acuity + red flags) is fed
-into the RAG synthesizer prompt so the LLM cannot downplay a serious symptom,
-and into the output verifier so a downplayed answer is blocked.
-
-Acuity levels
--------------
-CRITICAL  — life-threatening pattern (thunderclap + neuro, stroke signs,
-            meningeal signs with fever). Should bypass general RAG.
-HIGH      — severe pain (>= 7/10) or an isolated red flag. Needs prompt
-            in-person evaluation.
+Acuity levels:
+CRITICAL  — life-threatening pattern; bypasses RAG and escalates immediately.
+HIGH      — severe pain (>= 7/10) or an isolated red flag.
 MODERATE  — notable but non-emergency symptoms.
 LOW       — general/informational query, no red flags.
 """
@@ -315,7 +302,6 @@ class ClinicalTriageService:
             requires_immediate_escalation=critical,
         )
 
-    # ----------------------------------------------------------------------
     def _max_pain_score(self, text: str) -> int | None:
         """Highest valid pain-scale value found in the text (0..10)."""
         best: int | None = None

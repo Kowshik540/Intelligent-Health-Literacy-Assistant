@@ -1,17 +1,9 @@
 """
-Drug Interaction Service
-========================
-DETERMINISTIC high-risk drug-interaction checker — pure Python, NO LLM.
+Detects medications in the text (generic/brand name or class) and flags
+well-known high-risk pairs with a plain-language reason and a safer alternative.
 
-A small local model cannot be trusted to reliably catch dangerous drug
-combinations. This service detects medications mentioned in the text (by generic
-name, common brand names, and drug class), then flags well-established high-risk
-interacting pairs with a plain-language rationale and, where appropriate, a safer
-alternative.
-
-It works with the conversation's aggregated text (multi-turn memory), so a drug
-the patient mentioned earlier ("I take lisinopril") is checked against a drug
-they ask about later ("can I take ibuprofen?").
+Runs over the aggregated conversation text, so a drug mentioned earlier
+("I take lisinopril") is checked against one asked about later ("ibuprofen?").
 """
 
 from __future__ import annotations

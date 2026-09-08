@@ -1,14 +1,6 @@
 """
-LangGraph Health Agent
-======================
-An optional agentic pipeline (classify -> generate -> safety check) built on
-LangGraph. It uses the same LLM provider selection as the rest of the app
-(Ollama when ``USE_OLLAMA`` is set, otherwise OpenAI) via ``llm_factory``.
-
-The graph is built lazily through ``get_health_agent()`` so that importing this
-module never instantiates an LLM or compiles the graph — that only happens when
-the agent is actually used. This keeps startup fast and avoids crashing when no
-LLM provider is configured.
+Optional LangGraph agent (classify -> generate -> safety check). Built lazily
+via get_health_agent() so importing this module doesn't spin up an LLM.
 """
 
 from typing import Literal, Optional, TypedDict

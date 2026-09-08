@@ -1,22 +1,11 @@
 """
-Output Guardrail & Verification Service (Stage 4)
-=================================================
-DETERMINISTIC contradiction/acuity auditor — pure Python, NO LLM.
+Audits a generated answer before it reaches the user and blocks two failures:
 
-Runs on the generated answer BEFORE it is shown to the user. It catches the two
-failure modes this architecture is designed to eliminate:
+1. It contradicts a biometric classification (calls a "Normal" reading high,
+   or vice versa).
+2. It downplays a HIGH/CRITICAL symptom or fails to advise in-person care.
 
-1. Numerical contradiction: the answer contradicts a rule-engine biometric
-   classification — e.g. the engine said 110/60 is "Normal" but the text calls
-   it "high" / "hypertension"; or the engine said a value is high but the text
-   calls it "normal".
-
-2. Acuity downplaying: triage flagged HIGH/CRITICAL acuity (e.g. an 8/10
-   headache) but the answer calls it "mild", "just stress", "nothing serious",
-   etc., or fails to advise prompt in-person evaluation.
-
-If a problem is found the caller regenerates or appends a corrective safety
-notice, so a hallucinated contradiction never reaches the user.
+On failure the caller regenerates or prepends a corrective notice.
 """
 
 from __future__ import annotations

@@ -1,9 +1,6 @@
 """
-RAG Service — Retrieval-Augmented Generation Pipeline.
-This is the core AI engine: searches ChromaDB for relevant medical documents,
-then passes them to the LLM to generate a cited, factual answer.
-
-Flow: User Question → Embedding → ChromaDB Search → LLM Generation → Cited Answer
+Retrieval-augmented generation: embed the question, search ChromaDB, and have
+the LLM answer from the retrieved documents with citations.
 """
 
 import asyncio
