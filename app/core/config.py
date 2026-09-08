@@ -8,6 +8,23 @@ This follows the 12-Factor App methodology — all config comes from environment
 making the application portable across dev/staging/production environments.
 """
 
+import os
+
+# Silence ChromaDB's anonymized telemetry. In chromadb 0.5.x the telemetry
+# client raises noisy "capture() takes 1 positional argument" errors and can
+# cause a non-zero process exit code, which is confusing during testing. This
+# has no effect on functionality. Set before chromadb is imported anywhere.
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+
+# chromadb 0.5.x still tries to emit a few lifecycle telemetry events even when
+# telemetry is disabled, and its posthog client logs a harmless
+# "capture() takes 1 positional argument but 3 were given" error each time.
+# Silence that specific logger so testers don't see confusing (but harmless)
+# error lines. This does not affect functionality.
+import logging
+
+logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.CRITICAL)
+
 from pydantic_settings import BaseSettings
 
 

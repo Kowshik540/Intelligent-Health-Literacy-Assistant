@@ -4,23 +4,24 @@ Uses an LLM to convert terms like "Myocardial Infarction" to "Heart Attack"
 while preserving all citations and factual accuracy.
 """
 
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from app.core.config import settings
+from app.services.llm_factory import build_chat_llm
 
 
 # Prompt template that instructs the LLM to simplify without adding new information
-SIMPLIFIER_PROMPT = """Rewrite the following medical answer in clear, plain English for a general adult reader. Keep it accurate and professional.
+SIMPLIFIER_PROMPT = """Rewrite the following medical answer in clear, plain English for a general adult reader. Keep it accurate, professional, and just as scannable.
 
 STRICT RULES:
 1. Only rephrase what is written. Do NOT add any new facts, examples, risks, or conditions that are not in the original.
 2. For medical terms, add the plain meaning in parentheses. Example: "Hypertension (high blood pressure)".
-3. Keep ALL [Source: ...] citations exactly as they are.
-4. Use short, clear sentences and a calm, respectful tone. Do NOT use childish comparisons (no "candy", "tummy", etc.).
-5. Do NOT add commentary about what you did. Give only the rewritten answer.
-6. Keep it the same length or shorter than the original.
+3. PRESERVE THE STRUCTURE: keep the same Markdown formatting — the opening bottom-line sentence(s), any **bold headings** (such as "What this means" and "When to Seek Care"), and every bullet point. Rewrite the text inside them; do not collapse them into one paragraph.
+4. Keep ALL [Source: ...] citations exactly as they are, on their own line.
+5. Keep any emergency directive (call 112/108/911, go to the ER, do not drive) in the FIRST sentence, exactly as urgent as the original.
+6. Use short, clear sentences and a calm, respectful tone. Do NOT use childish comparisons (no "candy", "tummy", etc.).
+7. Do NOT add commentary about what you did. Give only the rewritten answer.
+8. Keep it the same length or shorter than the original.
 
 ORIGINAL:
 {clinical_answer}
@@ -33,21 +34,7 @@ class JargonSimplifier:
 
     # Initializes the LLM connection (same model as RAG, but higher temperature for natural language)
     def __init__(self):
-        if settings.USE_OLLAMA:
-            from langchain_community.chat_models import ChatOllama
-            self.llm = ChatOllama(
-                model=settings.OLLAMA_MODEL,
-                base_url=settings.OLLAMA_BASE_URL,
-                temperature=0.1,
-            )
-        elif settings.OPENAI_API_KEY:
-            self.llm = ChatOpenAI(
-                model=settings.OPENAI_MODEL,
-                temperature=0.1,
-                api_key=settings.OPENAI_API_KEY,
-            )
-        else:
-            self.llm = None
+        self.llm = build_chat_llm(temperature=0.1)
 
         self.prompt = ChatPromptTemplate.from_template(SIMPLIFIER_PROMPT)
         self.output_parser = StrOutputParser()

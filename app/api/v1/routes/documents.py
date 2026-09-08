@@ -286,23 +286,20 @@ async def get_document_file(
     #     ./uploads/<document_id>.pdf
     # --------------------------------------------------------
 
-    sample_path = os.path.join(
-        "./sample_docs",
-        filename,
+    # Seeded documents originate from ./data; a copy may also live in
+    # ./sample_docs. Uploaded documents are stored as ./uploads/<id>.pdf.
+    candidate_paths = [
+        os.path.join("./sample_docs", filename),
+        os.path.join("./data", filename),
+        os.path.join("./uploads", f"{document_id}.pdf"),
+    ]
+
+    file_path = next(
+        (p for p in candidate_paths if os.path.exists(p)),
+        None,
     )
 
-    upload_path = os.path.join(
-        "./uploads",
-        f"{document_id}.pdf",
-    )
-
-    if os.path.exists(sample_path):
-        file_path = sample_path
-
-    elif os.path.exists(upload_path):
-        file_path = upload_path
-
-    else:
+    if file_path is None:
         raise HTTPException(
             status_code=404,
             detail=(

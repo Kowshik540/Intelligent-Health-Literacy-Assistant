@@ -12,7 +12,7 @@ from app.schemas.conversation import (
     ChatRequest, ChatResponse, MessageResponse, CitationDetail,
     ConversationResponse, ConversationWithMessages,
 )
-from app.services.chat_service import ChatService
+from app.services.chat_service import ChatService, clean_display_text
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -66,9 +66,11 @@ async def get_conversation(conversation_id: str, db: AsyncSession = Depends(get_
 
     response = ConversationWithMessages.model_validate(conversation)
 
-    # Strip the internal clarification marker (e.g. [[CLARIFY:fever:2]]) before
-    # returning history so it never appears in the UI.
+    # Clean displayed history: strip the internal clarification marker
+    # (e.g. [[CLARIFY:fever:2]]) and any [Source: ...] citation tags so the
+    # chat bubbles stay clean (citations render in the evidence sidebar).
     for msg in response.messages:
-        msg.content = re.sub(r"\[\[CLARIFY:[^\]]*\]\]", "", msg.content)
+        content = re.sub(r"\[\[CLARIFY:[^\]]*\]\]", "", msg.content or "")
+        msg.content = clean_display_text(content)
 
     return response

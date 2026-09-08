@@ -1,27 +1,38 @@
+"""
+LangGraph Health Agent
+======================
+An optional agentic pipeline (classify -> generate -> safety check) built on
+LangGraph. It uses the same LLM provider selection as the rest of the app
+(Ollama when ``USE_OLLAMA`` is set, otherwise OpenAI) via ``llm_factory``.
 
+The graph is built lazily through ``get_health_agent()`` so that importing this
+module never instantiates an LLM or compiles the graph — that only happens when
+the agent is actually used. This keeps startup fast and avoids crashing when no
+LLM provider is configured.
+"""
 
-from typing import TypedDict, Annotated, Literal
-from langgraph.graph import StateGraph, END
-from langchain_openai import ChatOpenAI
+from typing import Literal, Optional, TypedDict
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langgraph.graph import StateGraph, END
 
-from app.core.config import settings
+from app.services.llm_factory import build_chat_llm
 
 
 class HealthAgentState(TypedDict):
-    
-    question: str                  
-    question_type: str             
-    context: str                   
-    answer: str                    
-    reading_level: str             
-    is_safe: bool                  
+    question: str
+    question_type: str
+    context: str
+    answer: str
+    reading_level: str
+    is_safe: bool
 
 
 def classify_question(state: HealthAgentState) -> dict:
-    
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, api_key=settings.OPENAI_API_KEY)
+    llm = build_chat_llm(temperature=0)
+    if llm is None:
+        return {"question_type": "general"}
 
     prompt = ChatPromptTemplate.from_template(
         "Classify this health question into ONE category: "
@@ -42,13 +53,19 @@ def classify_question(state: HealthAgentState) -> dict:
 
 
 def route_question(state: HealthAgentState) -> Literal["generate_answer"]:
-    
     return "generate_answer"
 
 
 def generate_answer(state: HealthAgentState) -> dict:
-    
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.3, api_key=settings.OPENAI_API_KEY)
+    llm = build_chat_llm(temperature=0.3)
+    if llm is None:
+        return {
+            "answer": (
+                "No language model is configured. Set USE_OLLAMA=True with a "
+                "running Ollama server, or provide an OPENAI_API_KEY."
+            ),
+            "is_safe": True,
+        }
 
     prompt = ChatPromptTemplate.from_template(
         "You are a health literacy assistant. The question type is: {question_type}\n\n"
@@ -74,7 +91,6 @@ def generate_answer(state: HealthAgentState) -> dict:
 
 
 def safety_check(state: HealthAgentState) -> dict:
-    
     answer = state.get("answer", "")
 
     unsafe_phrases = [
@@ -99,7 +115,6 @@ def safety_check(state: HealthAgentState) -> dict:
 
 
 def create_health_agent_graph():
-    
     graph = StateGraph(HealthAgentState)
 
     graph.add_node("classify_question", classify_question)
@@ -114,4 +129,13 @@ def create_health_agent_graph():
     return graph.compile()
 
 
-health_agent = create_health_agent_graph()
+# Lazily-built, cached compiled graph. Import stays side-effect free.
+_health_agent = None
+
+
+def get_health_agent():
+    """Return the compiled health-agent graph, building it on first use."""
+    global _health_agent
+    if _health_agent is None:
+        _health_agent = create_health_agent_graph()
+    return _health_agent

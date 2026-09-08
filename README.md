@@ -32,9 +32,13 @@ cd frontend
 npm install
 cd ..
 
-# 3. Setup PostgreSQL database
-# Create database: healthcare_db
-# Update .env with your credentials
+# 3. Configure the database
+# Copy .env.example to .env. It defaults to a local SQLite file (zero setup).
+# To use PostgreSQL: create a database named healthcare_db and set
+#   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/healthcare_db
+# (URL-encode special characters in the password, e.g. # -> %23).
+# Tables are created automatically on first startup — no manual migration needed.
+copy .env.example .env           # Windows  (cp on macOS/Linux)
 
 # 4. Pull the LLM model
 ollama pull qwen2:1.5b

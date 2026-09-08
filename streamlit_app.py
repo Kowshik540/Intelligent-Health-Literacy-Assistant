@@ -5,11 +5,16 @@ Alternative frontend for the application (lightweight, single-file).
 Run: streamlit run streamlit_app.py
 """
 
+import os
+
 import streamlit as st
 import httpx
 
 # Configuration
-API_URL = "http://localhost:8003/api/v1"
+# Backend base URL. Override with the API_URL env var if the backend runs on a
+# different host/port; defaults to the local backend on port 8000 (matches the
+# uvicorn default and docker-compose).
+API_URL = os.environ.get("API_URL", "http://localhost:8000/api/v1")
 
 # Page config
 st.set_page_config(

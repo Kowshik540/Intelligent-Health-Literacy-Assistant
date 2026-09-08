@@ -17,6 +17,11 @@ langchain==0.3.14
 langchain-openai==0.3.0
 langchain-community==0.3.14
 langchain-text-splitters==0.3.4
+# Standalone integration packages (preferred over the deprecated
+# langchain_community equivalents; the app falls back to community if absent).
+langchain-ollama==0.2.2
+langchain-huggingface==0.1.2
+langchain-chroma==0.1.4
 langgraph==0.2.60
 chromadb==0.5.23
 unstructured==0.16.12
@@ -35,4 +40,4 @@ python-dotenv==1.0.1
 python-multipart==0.0.20
 httpx==0.28.1
 pdfplumber==0.11.4
-email-validator
+email-validator==2.2.0

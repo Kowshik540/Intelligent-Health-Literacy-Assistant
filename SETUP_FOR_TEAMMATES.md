@@ -60,6 +60,37 @@ Only if you want to change defaults, copy `.env.example` to `.env` and edit it:
 
 ---
 
+## Using PostgreSQL instead of SQLite
+
+The app works with SQLite out of the box, but if you want to run it against a
+local PostgreSQL server (recommended for a production-like test):
+
+1. Create the database and note your credentials:
+
+   ```sql
+   -- in psql, as the postgres superuser
+   CREATE DATABASE healthcare_db;
+   ```
+
+2. Copy `.env.example` to `.env` and set `DATABASE_URL`. Use the async-friendly
+   `postgresql://` scheme (the app converts it to `asyncpg` automatically):
+
+   ```env
+   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/healthcare_db
+   ```
+
+   If your password contains special characters, URL-encode them
+   (for example `#` becomes `%23`, `@` becomes `%40`).
+
+3. Tables are created automatically on startup — no manual migration step is
+   needed. (Alembic migrations are available in `alembic/` if you prefer to run
+   them explicitly against PostgreSQL.)
+
+The startup banner prints which database and LLM are active, so you can confirm
+your configuration at a glance.
+
+---
+
 ## Option 2: Docker
 
 Install Docker Desktop, make sure Ollama is running on the host with the model pulled, then:
@@ -84,6 +115,27 @@ python tests/test_all.py
 
 All 26 checks should pass (guardrails, PII, emergency detection, document validation,
 RAG retrieval, LLM generation, database, and API endpoints).
+
+---
+
+## Scenarios you can try
+
+Once the backend is running (and Ollama is up with the model pulled), you can
+exercise every feature from the UI at `http://localhost:5173`, from the
+interactive API docs at `http://localhost:8000/docs`, or with the Streamlit UI
+(`streamlit run streamlit_app.py`). Things that work end to end:
+
+| Scenario | What to type | Expected behaviour |
+|----------|--------------|--------------------|
+| Document-backed answer | "What are the symptoms of diabetes?" | Plain-language answer plus a clinical version, with citations (source PDF, page, section) shown in the sidebar. |
+| General health question | "How can I improve my sleep?" | Helpful general answer, clearly labelled as general information (no citation), ending with a "confirm with a professional" note. |
+| Emergency detection | "I am having a heart attack" | Immediate safety response with emergency helplines (112 / 108 for India). No document lookup. |
+| PII redaction | "my email is john@gmail.com, what is hypertension?" | The email is stripped before processing; the answer still addresses hypertension. |
+| Greeting / small talk | "hello" | A short friendly reply, no document retrieval. |
+| Non-health / gibberish | "asdfghjkl" | Politely asks you to rephrase as a health question — it does not make anything up. |
+| Follow-up questions | Describe a personal symptom | The assistant asks a clarifying question before answering. |
+| Document upload | Upload a WHO PDF from `sample_docs/` via `POST /ingest`, then approve it via `POST /ingest/approve/{id}` | The PDF is validated, indexed into ChromaDB, and becomes searchable. |
+| Feedback | Thumbs up / down on an answer | Recorded in the database; corrections build the "golden dataset" (`GET /feedback/golden-dataset`). |
 
 ---
 
