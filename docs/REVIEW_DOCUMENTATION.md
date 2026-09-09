@@ -6,7 +6,7 @@ A RAG-based application that answers health questions only from verified medical
 
 **Project 1 — Healthcare Domain**
 
-**Status:** Working End-to-End Prototype — Phase 3 Complete, Phase 4 In Progress
+**Status:** Complete — working end-to-end, all phases delivered
 
 **Team Members**
 - Bhavya Konagala
@@ -304,7 +304,7 @@ While the system does not process actual patient health records, it follows HIPA
 | Phase 1 | Weeks 1–2 | Environment setup and data collection | Dev environment, dependency setup, verified WHO PDFs, PostgreSQL schema, React project init, ChromaDB installation | Complete |
 | Phase 2 | Weeks 3–4 | Data pipeline and document validation | PDF parsing, section-aware chunking, metadata tagging, document validation pipeline, BGE embedding, ChromaDB storage | Complete |
 | Phase 3 | Weeks 5–6 | Core AI logic and safety features | RAG retrieval chain, citation enforcement, verification layer, refusal logic, emergency detection, greeting handling, jargon simplifier, simplification validation, PII redaction, frontend-backend integration | Complete |
-| Phase 4 | Weeks 7–8 | Integration, testing, and final delivery | End-to-end integration, feedback system, accuracy/hallucination testing, security review, frontend polish, final documentation | In Progress |
+| Phase 4 | Weeks 7–8 | Integration, testing, and final delivery | End-to-end integration, feedback system, accuracy/hallucination testing, security review, frontend polish, final documentation | Complete |
 
 **Review cadence:** Progress review meeting every 2 weeks (end of each phase).
 

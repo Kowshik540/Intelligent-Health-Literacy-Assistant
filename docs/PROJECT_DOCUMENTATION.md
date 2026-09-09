@@ -6,7 +6,7 @@ A RAG-based application that answers health questions only from verified medical
 
 **Project 1 — Healthcare Domain**
 
-**Status:** Draft — Work in Progress (updated as each module is completed)
+**Status:** Complete — all modules implemented, integrated, and tested
 
 **Team Members**
 - Bhavya Konagala
@@ -299,7 +299,7 @@ The project has been divided into five functional modules, each owned by a team 
 
 ### A.1 Documentation & Project Planning — Owner: K. Dharani Thanuja
 
-**Status:** In Progress
+**Status:** Complete
 
 **Work Completed**
 - Drafted the initial project documentation covering the problem statement, objectives, scope, architecture, workflow, and tech stack.

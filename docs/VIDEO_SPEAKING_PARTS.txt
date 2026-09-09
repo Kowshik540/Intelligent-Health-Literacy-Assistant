@@ -1,0 +1,229 @@
+====================================================================
+ DEMO VIDEO - WHAT EACH PERSON EXPLAINS
+ Intelligent Health Literacy Assistant
+====================================================================
+
+HOW TO USE THIS:
+- Read your own section out loud while showing your files on screen.
+- Keep it simple - just say what each file and function does.
+- Each part is about 4-5 minutes.
+
+ONE LINE EVERYONE CAN SAY ONCE:
+"The Python code handles all the math and safety checks so they are exact,
+ and the AI model only writes the answer in simple language. That is what
+ keeps it safe."
+
+
+====================================================================
+ PERSON 1 - KOWSHIK THOTA
+ Topic: Backend and the main AI pipeline
+ Files: app/main.py, app/core/config.py, app/core/database.py,
+        app/api/v1/router.py, app/services/chat_service.py,
+        app/services/jargon_simplifier.py
+====================================================================
+
+START BY SAYING:
+"I built the backend using FastAPI and connected the full AI pipeline.
+ I will show how the app starts and how every question is processed."
+
+app/main.py - starts the whole application.
+- lifespan(): runs when the server starts. It creates the database tables,
+  adds a default demo user, loads the AI embedding model early so the first
+  answer is fast, and prints a startup banner. On shutdown it closes the
+  database connection.
+- root(): the "/" endpoint that just says the server is running.
+
+app/core/config.py - keeps all settings in one place.
+- The Settings class reads values from the .env file: database URL, the
+  Ollama model, the embedding model, and the ChromaDB folder. It defaults to
+  SQLite and Ollama so it can run with no setup.
+
+app/core/database.py - connects to the database.
+- It sets up the database engine and connection pooling.
+- get_db(): gives each request its own database session, saves it if the
+  request works, and undoes it if there is an error.
+
+app/api/v1/router.py - collects all the endpoints under /api/v1.
+
+app/services/chat_service.py - this is the MAIN file, the brain.
+- process_message(): every user message runs through here in order -
+  guardrails, memory, triage, vital signs, follow-up question, document
+  search, simplify, verify, drug check, then save and return the answer.
+- _gather_session_history(): remembers earlier messages so a symptom now is
+  checked with details given earlier.
+- _emergency_escalation(): sends the emergency message when a red flag is
+  found, and it does NOT ask any more questions.
+- _verify_and_correct(): double-checks the answer and fixes it if it is wrong.
+
+app/services/jargon_simplifier.py - makes answers easy to read.
+- simplify(): uses the model to turn medical words into plain English, for
+  example "myocardial infarction" becomes "heart attack", while keeping the
+  citations.
+
+END BY SAYING:
+"So the backend runs the whole pipeline in a fixed order, and if it is an
+ emergency it stops early and warns the user immediately."
+
+
+====================================================================
+ PERSON 2 - K. DHARANI THANUJA
+ Topic: Documentation + the safety guardrails (worked on backend with Kowshik)
+ Files: (documentation) + app/services/guardrails_service.py,
+        app/services/document_validation_service.py
+====================================================================
+
+START BY SAYING:
+"I handled the project documentation - the problem statement, objectives,
+ architecture and workflow - and I sourced and verified the WHO guideline
+ PDFs. On the backend, I worked with Kowshik on the safety guardrails and
+ the document verification."
+
+Documentation and sources (say briefly):
+- I maintained the documentation covering the problem, scope, architecture,
+  and tech stack, and I collected the WHO guideline documents and verified
+  each one against the official WHO and government sources before we used it.
+
+app/services/guardrails_service.py - the first safety check on every message.
+- check_query(): the main function. It first checks if the message is an
+  emergency; if yes, it returns an emergency message with helpline numbers
+  and stops. If not, it removes any personal information and lets it continue.
+- _is_emergency_query(): looks for emergency phrases like heart attack,
+  suicide, overdose, or trouble breathing.
+- _sanitize_pii(): hides personal details - email, phone number, ID numbers,
+  address, and name - by replacing them with a REDACTED tag, so private data
+  never reaches the AI model.
+
+app/services/document_validation_service.py - checks documents are trustworthy.
+- validate_file_type(): only allows PDF files.
+- generate_hash(): creates a unique fingerprint of the file.
+- check_source_whitelist(): confirms the document comes from a trusted source
+  like WHO, CDC, or NIH.
+- validate_document(): runs all these checks together before a document is
+  allowed in.
+
+END BY SAYING:
+"So before anything reaches the AI, we make sure the message is safe and
+ private, and that our documents come only from trusted medical sources."
+
+
+====================================================================
+ PERSON 3 - BACHINA MANOGNA
+ Topic: PDF processing and ChromaDB (the search / RAG part)
+ Files: app/services/ingestion_service.py, app/services/rag_service.py,
+        app/services/llm_factory.py, seed_documents.py
+====================================================================
+
+START BY SAYING:
+"I set up ChromaDB, the vector database, and the part that turns documents
+ into searchable data and finds the right information for each question."
+
+app/services/ingestion_service.py - turns documents into searchable pieces.
+- process_pdf(): reads a PDF page by page, splits it into small chunks, and
+  saves each chunk with its source, page number, and section.
+- process_text_file(): does the same for text files.
+
+app/services/rag_service.py - finds documents and writes the answer.
+- get_response(): the main function. It turns the question into numbers
+  (embeddings), searches ChromaDB for the 3 most similar chunks, keeps only
+  the relevant ones, and asks the model to write an answer with citations.
+- _general_answer(): if no document matches, it answers from general medical
+  knowledge, clearly, without a fake citation.
+- add_documents(): stores new chunks into ChromaDB.
+
+app/services/llm_factory.py - builds the AI pieces in one place.
+- build_chat_llm(): gives the chat model (Ollama).
+- build_embeddings(): gives the model that turns text into numbers.
+- build_chroma(): connects to the ChromaDB store.
+
+seed_documents.py - builds the knowledge base.
+- seed(): reads the WHO documents in the data folder and loads them into
+  ChromaDB. This is the one command we run after downloading the project.
+
+END BY SAYING:
+"So ChromaDB stores the medical documents with page and section details, and
+ every answer is built only from the closest matching documents."
+
+
+====================================================================
+ PERSON 4 - BHAVYA KONAGALA
+ Topic: The frontend (React / Vite)
+ Files: frontend/src/ (App.tsx, config.ts, components/)
+====================================================================
+
+START BY SAYING:
+"I built the frontend using React and Vite. It has four pages - Overview,
+ Assistant, Knowledge, and Safety - and it connects to the live backend."
+
+frontend/src/main.tsx and App.tsx - the app shell.
+- They set up the page layout, the navigation between pages, and the
+  light/dark theme toggle, which is saved between sessions.
+
+frontend/src/config.ts - one place for the backend address.
+- apiUrl(): builds every backend link, so all API calls point to one place.
+
+components/assistant/AssistantPage.tsx - the chat page.
+- It sends the question to the backend and shows the answer.
+- It has a Clinical / Plain-Language toggle, shows citations, keeps
+  conversation history, and supports voice input.
+- startListening() and stopListening() handle the microphone voice input.
+- startNewConversation() clears the chat to begin fresh.
+
+components/knowledge/DocumentUploader.tsx - the Knowledge page.
+- It lists only the verified, approved documents from the backend.
+
+components/safety/PIIDemo.tsx - the Safety page.
+- It shows the guardrails live, including the personal-information (PII) check.
+
+components/layout/ and common/ and 3d/ - the header, the cards, and the
+animated medical graphics.
+
+END BY SAYING:
+"So the frontend gives a clean interface, connects to the live backend, and
+ shows the answers, citations, and safety features to the user."
+
+
+====================================================================
+ PERSON 5 - A NAGA LAXMI
+ Topic: Database, testing, integration, and the live demo
+ Files: app/models/, app/api/v1/routes/, tests/test_all.py
+====================================================================
+
+START BY SAYING:
+"I worked on the database design, connecting all the modules together, and
+ the automated test suite that checks everything works."
+
+app/models/ - the database tables.
+- user.py: the User table (accounts).
+- conversation.py: the Conversation and Message tables (chat history).
+- document.py: the Document table (upload, validation, approval).
+- feedback.py: the Feedback table (thumbs up/down and corrections).
+
+app/api/v1/routes/ - the API endpoints.
+- chat.py: the main /chat endpoint and conversation history.
+- documents.py: upload, approve, list, and view documents.
+- feedback.py: save a rating and build the improvement dataset.
+- safety.py: run just the guardrails for the Safety demo.
+- health.py: a simple health check.
+
+tests/test_all.py - the automated test suite.
+- It runs 26 checks covering personal-info removal, emergency detection,
+  document validation, document search, full AI answers, the database, and
+  the API endpoints. All 26 pass.
+
+THEN DO THE LIVE DEMO (type these in the app):
+  1. "What are the symptoms of diabetes?"  -> shows an answer WITH citations
+  2. "My blood pressure is 110/60"          -> correctly says it is NORMAL
+  3. "I have chest pain"                     -> instant emergency warning
+  4. "I take lisinopril, can I take ibuprofen?" -> drug interaction warning
+
+END BY SAYING:
+"So all the modules are connected to the database, and 26 automated tests
+ confirm the safety features and the full pipeline work correctly."
+
+
+====================================================================
+ CLOSING (anyone can say)
+====================================================================
+"To sum up: verified WHO documents give trustworthy answers with citations,
+ and the safety layer makes sure the app never mishandles an emergency, a
+ vital sign, or a drug interaction. Thank you."
