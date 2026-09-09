@@ -1627,3 +1627,94 @@ textarea {
   border-color: var(--cyan) !important;
   background: rgba(89, 187, 216, 0.08) !important;
 }
+
+/* =========================================================
+   DARK THEME — VERIFIED RESPONSE CARD & FEEDBACK
+   The verified-answer card, feedback buttons, and feedback
+   form used hardcoded near-white backgrounds, washing out
+   their content in dark mode.
+   ========================================================= */
+
+:root[data-theme="dark"] .verified-answer {
+  background: linear-gradient(
+    135deg,
+    rgba(76, 199, 154, 0.10),
+    rgba(76, 199, 154, 0.05)
+  );
+  border-color: rgba(76, 199, 154, 0.32);
+  box-shadow: 0 10px 26px -22px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme="dark"] .verified-answer p {
+  color: var(--ink-dim);
+}
+
+/* Thumbs up/down buttons. */
+:root[data-theme="dark"] .feedback .feedback-button {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .feedback .feedback-button:hover {
+  background: rgba(89, 187, 216, 0.12);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+:root[data-theme="dark"] .feedback .feedback-button.feedback-active {
+  background: rgba(89, 187, 216, 0.18);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+/* Feedback form (opens on thumbs-down). */
+:root[data-theme="dark"] .feedback-form {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .feedback-form-header strong {
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .feedback-options button {
+  background: var(--surface-card);
+  border-color: var(--glass-border);
+  color: var(--ink-dim);
+}
+
+:root[data-theme="dark"] .feedback-options button.selected {
+  background: rgba(89, 187, 216, 0.18);
+  color: var(--cyan);
+  border-color: var(--cyan);
+}
+
+:root[data-theme="dark"] .feedback-form textarea {
+  background: var(--surface-card);
+  border-color: var(--glass-border);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .feedback-form textarea::placeholder {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .feedback-actions button {
+  background: var(--surface-card);
+  border-color: var(--glass-border);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .feedback-actions .primary {
+  background: var(--blue);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .feedback-success {
+  background: rgba(76, 199, 154, 0.12);
+  color: var(--success);
+}
