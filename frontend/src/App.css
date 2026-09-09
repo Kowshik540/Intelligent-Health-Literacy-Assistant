@@ -1777,3 +1777,46 @@ textarea {
 :root[data-theme="dark"] .safety-input input::placeholder {
   color: var(--muted);
 }
+
+/* =========================================================
+   DARK THEME — KNOWLEDGE DOCUMENT PREVIEW ("paper")
+   The document preview is styled like a printed white page.
+   In dark mode its text used light theme colors and washed
+   out on the white paper. Keep the paper white but force
+   dark, readable text so it always looks like a real page.
+   ========================================================= */
+
+:root[data-theme="dark"] .document-paper {
+  background: #f4f7f9;
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #14232c;
+  box-shadow: 0 24px 55px -30px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme="dark"] .document-paper h3 {
+  color: #10232d;
+}
+
+:root[data-theme="dark"] .document-paper p,
+:root[data-theme="dark"] .paper-header {
+  color: #3d5560;
+}
+
+:root[data-theme="dark"] .document-paper .highlighted-paragraph {
+  background: rgba(47, 149, 179, 0.12);
+  border-left-color: var(--cyan-dim);
+}
+
+:root[data-theme="dark"] .document-paper .highlighted-paragraph p {
+  color: #16323d;
+}
+
+:root[data-theme="dark"] .document-paper .document-footer {
+  color: #2f8f68;
+  border-top-color: rgba(0, 0, 0, 0.12);
+}
+
+:root[data-theme="dark"] .document-section-nav {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+}
