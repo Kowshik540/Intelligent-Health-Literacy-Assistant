@@ -1718,3 +1718,62 @@ textarea {
   background: rgba(76, 199, 154, 0.12);
   color: var(--success);
 }
+
+/* =========================================================
+   DARK THEME — SAFETY PAGE
+   The safety cards, ring, PII textarea, and test input were
+   hardcoded to near-white backgrounds, so their content was
+   washed out in dark mode.
+   ========================================================= */
+
+:root[data-theme="dark"] .safety-overview,
+:root[data-theme="dark"] .safety-modules,
+:root[data-theme="dark"] .safety-test,
+:root[data-theme="dark"] .pii-card {
+  background: var(--surface-card);
+  border-color: var(--glass-border);
+  box-shadow: 0 20px 45px -35px rgba(0, 0, 0, 0.6);
+}
+
+/* The progress ring's white centre needs to become the card surface. */
+:root[data-theme="dark"] .safety-ring {
+  background:
+    radial-gradient(circle, var(--surface-card) 47%, transparent 48%),
+    conic-gradient(var(--success) 0 92%, rgba(90, 120, 130, 0.3) 92% 100%);
+}
+
+/* PII sanitization textarea. */
+:root[data-theme="dark"] .pii-card textarea {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .pii-card textarea::placeholder {
+  color: var(--muted);
+}
+
+/* Sanitized result panel text. */
+:root[data-theme="dark"] .sanitized-result {
+  background: rgba(76, 199, 154, 0.10);
+  border-color: rgba(76, 199, 154, 0.3);
+}
+
+:root[data-theme="dark"] .sanitized-result p {
+  color: var(--ink);
+}
+
+/* Safety-test input row. */
+:root[data-theme="dark"] .safety-input {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border);
+}
+
+:root[data-theme="dark"] .safety-input input {
+  background: transparent;
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .safety-input input::placeholder {
+  color: var(--muted);
+}
