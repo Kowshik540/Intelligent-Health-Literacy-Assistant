@@ -1293,3 +1293,192 @@ textarea {
   font-weight: 700;
   color: #3ca987;
 }
+
+/* =========================================================
+   DARK THEME CONTRAST FIXES
+   Many components were authored with hardcoded white/light
+   surfaces. In dark mode the text color flips to light, so
+   light-on-white becomes unreadable. These overrides map those
+   hardcoded surfaces onto the dark theme's surface variables.
+   ========================================================= */
+
+:root[data-theme="dark"] .message-bubble {
+  background: var(--surface-card);
+  border-color: var(--glass-border);
+  color: var(--ink);
+  box-shadow: 0 10px 24px -20px rgba(0, 0, 0, 0.7);
+}
+
+/* Keep the user's own bubble on the accent gradient (already fine). */
+:root[data-theme="dark"] .message.user .message-bubble {
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .suggestion-row button,
+:root[data-theme="dark"] .feedback-form,
+:root[data-theme="dark"] .pdf-preview {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .pdf-preview {
+  background: var(--surface-card);
+}
+
+:root[data-theme="dark"] .pdf-toolbar {
+  border-bottom-color: var(--glass-border-soft);
+}
+
+/* Chat / evidence panels and their headers. */
+:root[data-theme="dark"] .chat-panel,
+:root[data-theme="dark"] .source-panel {
+  background: var(--surface-card);
+  border-color: var(--glass-border);
+}
+
+:root[data-theme="dark"] .chat-header,
+:root[data-theme="dark"] .chat-composer,
+:root[data-theme="dark"] .chat-body {
+  background: transparent;
+  border-color: var(--glass-border-soft);
+}
+
+/* The pill buttons (HISTORY / NEW CHAT) use inline #ffffff; override them. */
+:root[data-theme="dark"] .chat-header button {
+  background: var(--surface-recessed) !important;
+  border-color: var(--glass-border) !important;
+  color: var(--ink) !important;
+}
+
+/* The composer text input. */
+:root[data-theme="dark"] .chat-composer input,
+:root[data-theme="dark"] .chat-composer textarea,
+:root[data-theme="dark"] .composer-input,
+:root[data-theme="dark"] textarea {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: var(--muted);
+}
+
+/* History dropdown list rows use inline light backgrounds. */
+:root[data-theme="dark"] .chat-panel [style*="background: #ffffff"],
+:root[data-theme="dark"] .chat-panel [style*="background:#ffffff"] {
+  background: var(--surface-recessed) !important;
+  border-color: var(--glass-border) !important;
+  color: var(--ink) !important;
+}
+
+/* =========================================================
+   CLINICAL / PLAIN-LANGUAGE TOGGLE — clearer active state
+   ========================================================= */
+
+.mode-badge {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border);
+  gap: 4px;
+  padding: 4px;
+}
+
+.mode-badge button {
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.18s var(--ease-out), color 0.18s var(--ease-out);
+}
+
+/* The selected mode is filled with the accent so it's obvious which is active. */
+.mode-badge button[aria-pressed="true"] {
+  color: var(--on-accent);
+  background: linear-gradient(135deg, var(--cyan), var(--blue));
+  box-shadow: 0 6px 16px -10px rgba(39, 121, 168, 0.8);
+}
+
+.mode-badge button:not([aria-pressed="true"]):hover {
+  color: var(--blue);
+  background: rgba(89, 187, 216, 0.10);
+}
+
+/* =========================================================
+   DARK THEME — SEARCH INPUTS
+   The library / knowledge search boxes were hardcoded to a
+   white background with no text color, so in dark mode the
+   light text sat on a white box and was invisible.
+   ========================================================= */
+
+/* Make every search input explicitly use theme text color. */
+.search input,
+.library-search input {
+  color: var(--ink);
+}
+
+.search input::placeholder,
+.library-search input::placeholder {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .library-search,
+:root[data-theme="dark"] .source-library,
+:root[data-theme="dark"] .document-panel {
+  background: var(--surface-card);
+  border-color: var(--glass-border);
+}
+
+:root[data-theme="dark"] .library-search {
+  background: var(--surface-recessed);
+}
+
+:root[data-theme="dark"] .library-search input {
+  background: transparent;
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .upload-button {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border);
+}
+
+/* The Knowledge-page search input in DocumentUploader uses inline styles
+   (white-ish box). Force it onto the dark surface with readable text. */
+:root[data-theme="dark"] .source-library input,
+:root[data-theme="dark"] .document-panel input {
+  background: var(--surface-recessed) !important;
+  border-color: var(--glass-border) !important;
+  color: var(--ink) !important;
+}
+
+/* DocumentUploader search input (was inline-styled, white-only). */
+.doc-search-input {
+  border: 1px solid var(--glass-border);
+  background: var(--surface-card);
+  color: var(--ink);
+}
+
+.doc-search-input::placeholder {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .doc-search-input {
+  background: var(--surface-recessed);
+  border-color: var(--glass-border);
+  color: var(--ink);
+}
+
+/* DocumentUploader's white panel wrapper in dark mode. */
+:root[data-theme="dark"] [style*="background: #ffffff"],
+:root[data-theme="dark"] [style*="background:#ffffff"] {
+  background: var(--surface-card) !important;
+  color: var(--ink);
+}

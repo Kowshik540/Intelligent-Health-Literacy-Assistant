@@ -34,4 +34,8 @@ export type Message = {
   // True when the answer is helpful general knowledge (not a refusal) but is
   // not backed by a verified document citation.
   general?: boolean;
+  // Both answer versions from the backend, so the Clinical / Plain-Language
+  // toggle works for every assistant message, not only verified ones.
+  clinical?: string;
+  plain?: string;
 };

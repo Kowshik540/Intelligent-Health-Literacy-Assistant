@@ -589,6 +589,11 @@ export default function AssistantPage() {
           answerText ||
           "I could not find sufficient information to answer this question safely. Please consult a healthcare professional.",
 
+        // Store both versions so the Clinical / Plain toggle works on every
+        // answer, including general-knowledge ones without citations.
+        clinical: data.clinical_answer || data.simplified_answer || "",
+        plain: data.simplified_answer || data.clinical_answer || "",
+
         response: hasVerified ? response : undefined,
 
         // Only a true refusal is flagged unsupported. Greetings, clarifications,
@@ -920,14 +925,14 @@ export default function AssistantPage() {
                 </div>
 
                 <div className="message-bubble">
-                  {message.role === "assistant" &&
-                  message.response
-                    ? answerMode ===
-                      "clinical"
-                      ? message.response
-                          .answer
-                      : message.response
-                          .plain
+                  {message.role === "assistant"
+                    ? answerMode === "clinical"
+                      ? message.clinical ??
+                        message.response?.answer ??
+                        message.text
+                      : message.plain ??
+                        message.response?.plain ??
+                        message.text
                     : message.text}
                 </div>
 

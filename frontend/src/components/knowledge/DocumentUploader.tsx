@@ -211,13 +211,13 @@ export default function DocumentUploader() {
                 </span>
 
                 <input
+                  className="doc-search-input"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search medical sources..."
                   style={{
                     width: "100%",
                     boxSizing: "border-box",
-                    border: "1px solid #dbe7ec",
                     borderRadius: "8px",
                     padding: "12px 12px 12px 34px",
                     fontSize: "12px",
