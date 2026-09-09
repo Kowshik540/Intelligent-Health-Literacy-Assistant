@@ -784,9 +784,11 @@ export default function AssistantPage() {
 
           {historyOpen && (
             <div
+              className="history-dropdown"
               style={{
-                borderBottom: "1px solid #e5edf1",
-                background: "#fbfdfe",
+                borderBottom: "1px solid var(--glass-border-soft)",
+                background: "var(--surface-recessed)",
+                color: "var(--ink)",
                 padding: "12px 14px",
                 maxHeight: "220px",
                 overflowY: "auto",
@@ -800,7 +802,7 @@ export default function AssistantPage() {
                   marginBottom: "8px",
                 }}
               >
-                <strong style={{ fontSize: "11px", letterSpacing: "0.08em" }}>
+                <strong style={{ fontSize: "11px", letterSpacing: "0.08em", color: "var(--ink)" }}>
                   CONVERSATION HISTORY
                 </strong>
 
@@ -811,6 +813,7 @@ export default function AssistantPage() {
                   style={{
                     border: "none",
                     background: "transparent",
+                    color: "var(--ink-dim)",
                     fontSize: "14px",
                     cursor: historyLoading ? "default" : "pointer",
                   }}
@@ -837,12 +840,16 @@ export default function AssistantPage() {
                   type="button"
                   onClick={() => void loadConversation(conversation.id)}
                   disabled={loadingConversationId !== null}
+                  className="history-row"
                   style={{
                     width: "100%",
                     textAlign: "left",
-                    border: "1px solid #e2ebef",
+                    border: "1px solid var(--glass-border)",
                     background:
-                      conversation.id === conversationId ? "#eef8fb" : "#ffffff",
+                      conversation.id === conversationId
+                        ? "var(--surface-card)"
+                        : "transparent",
+                    color: "var(--ink)",
                     borderRadius: "8px",
                     padding: "9px 10px",
                     marginBottom: "6px",

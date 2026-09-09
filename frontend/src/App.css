@@ -1621,3 +1621,9 @@ textarea {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Conversation history dropdown rows — subtle hover. */
+.history-row:hover:not(:disabled) {
+  border-color: var(--cyan) !important;
+  background: rgba(89, 187, 216, 0.08) !important;
+}
