@@ -95,6 +95,9 @@ export default function AssistantPage() {
   >(null);
 
   const [sourceOpen, setSourceOpen] = useState(false);
+  // Controls the inner PDF preview inside the source modal (separate from
+  // sourceOpen, which now opens/closes the whole modal).
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -158,6 +161,7 @@ export default function AssistantPage() {
       setQuestion("");
       setSelectedSource(null);
       setSourceOpen(false);
+      setPreviewOpen(false);
       setFeedback(null);
       setFeedbackType("");
       setFeedbackComment("");
@@ -182,6 +186,7 @@ export default function AssistantPage() {
     setQuestion("");
     setSelectedSource(null);
     setSourceOpen(false);
+    setPreviewOpen(false);
     setFeedback(null);
     setFeedbackType("");
     setFeedbackComment("");
@@ -431,6 +436,7 @@ export default function AssistantPage() {
     setQuestion("");
     setSelectedSource(null);
     setSourceOpen(false);
+    setPreviewOpen(false);
     setFeedback(null);
     setFeedbackType("");
     setFeedbackComment("");
@@ -1309,8 +1315,20 @@ export default function AssistantPage() {
           </div>
         </section>
 
-        {/* SOURCE SIDEBAR */}
-        <aside className="source-panel">
+        {/* SOURCE VERIFICATION — opens as a modal popup on demand */}
+        {sourceOpen && (
+        <div
+          className="source-modal-backdrop"
+          onClick={() => setSourceOpen(false)}
+          role="presentation"
+        >
+        <aside
+          className="source-panel source-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Source verification"
+          onClick={(event) => event.stopPropagation()}
+        >
           <div className="source-heading">
             <div>
               <span className="tiny-label">
@@ -1322,11 +1340,14 @@ export default function AssistantPage() {
               </h2>
             </div>
 
-            {selectedSource && (
-              <span className="source-count">
-                01
-              </span>
-            )}
+            <button
+              type="button"
+              className="source-modal-close"
+              onClick={() => setSourceOpen(false)}
+              aria-label="Close source verification"
+            >
+              ✕
+            </button>
           </div>
 
           {!selectedSource ? (
@@ -1382,20 +1403,14 @@ export default function AssistantPage() {
 
               <button
                 className="source-preview-button"
-                onClick={() => {
-                  setSourceOpen(
-                    !sourceOpen
-                  );
-
-                  
-                }}
+                onClick={() => setPreviewOpen(!previewOpen)}
               >
-                {sourceOpen
+                {previewOpen
                   ? "Hide source preview"
                   : "Open source preview"}
               </button>
 
-              {sourceOpen && (
+              {previewOpen && (
                 <div className="pdf-preview">
                   <div className="pdf-toolbar">
                     <span>
@@ -1475,6 +1490,8 @@ export default function AssistantPage() {
             </div>
           )}
         </aside>
+        </div>
+        )}
       </div>
     </main>
   );

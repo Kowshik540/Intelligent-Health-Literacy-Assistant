@@ -1552,3 +1552,72 @@ textarea {
   -webkit-text-fill-color: var(--ink) !important;
   box-shadow: 0 0 0 1000px var(--surface-recessed) inset !important;
 }
+
+/* =========================================================
+   SOURCE VERIFICATION AS A MODAL POPUP
+   The evidence panel is no longer a permanent right column;
+   the chat takes the full width and the panel opens on demand
+   (via "View supporting citation") as a centered modal.
+   ========================================================= */
+
+/* Chat panel now spans the full width. */
+.assistant-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.source-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6, 14, 20, 0.55);
+  backdrop-filter: blur(3px);
+  animation: source-modal-fade 0.15s var(--ease-out);
+}
+
+.source-panel.source-modal {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  min-height: 0;
+  background: var(--surface-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.6);
+  animation: source-modal-pop 0.18s var(--ease-out);
+}
+
+.source-modal-close {
+  border: 1px solid var(--glass-border);
+  background: var(--surface-recessed);
+  color: var(--ink-dim);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+
+.source-modal-close:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+@keyframes source-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes source-modal-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
