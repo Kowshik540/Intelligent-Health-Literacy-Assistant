@@ -55,3 +55,7 @@ frontend_old/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Internal docs & team materials (kept local, not published to GitHub)
+docs/
+SETUP_FOR_TEAMMATES.md
