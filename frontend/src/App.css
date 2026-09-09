@@ -1482,3 +1482,43 @@ textarea {
   background: var(--surface-card) !important;
   color: var(--ink);
 }
+
+/* =========================================================
+   DARK THEME — HEADER SEARCH (force dark surface + light text)
+   Hardened rules so the header "Search AI..." box is always a
+   dark pill with readable text in dark mode, including on focus
+   and browser autofill.
+   ========================================================= */
+
+:root[data-theme="dark"] .search,
+:root[data-theme="dark"] .search:focus-within {
+  background: var(--surface-recessed) !important;
+  border-color: var(--glass-border) !important;
+}
+
+:root[data-theme="dark"] .search input {
+  background: transparent !important;
+  color: var(--ink) !important;
+}
+
+:root[data-theme="dark"] .search input::placeholder {
+  color: var(--muted) !important;
+}
+
+/* Chrome/Safari autofill can force a white box + dark text; neutralise it. */
+:root[data-theme="dark"] .search input:-webkit-autofill,
+:root[data-theme="dark"] .library-search input:-webkit-autofill,
+:root[data-theme="dark"] .doc-search-input:-webkit-autofill {
+  -webkit-text-fill-color: var(--ink) !important;
+  caret-color: var(--ink);
+  transition: background-color 9999s ease-in-out 0s;
+  box-shadow: 0 0 0 1000px var(--surface-recessed) inset !important;
+}
+
+/* Light-mode autofill: keep dark text so it's never white-on-white either. */
+.search input:-webkit-autofill,
+.library-search input:-webkit-autofill,
+.doc-search-input:-webkit-autofill {
+  -webkit-text-fill-color: var(--ink);
+  box-shadow: 0 0 0 1000px var(--surface-card) inset;
+}
