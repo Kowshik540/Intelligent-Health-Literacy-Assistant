@@ -1522,3 +1522,33 @@ textarea {
   -webkit-text-fill-color: var(--ink);
   box-shadow: 0 0 0 1000px var(--surface-card) inset;
 }
+
+/* =========================================================
+   DARK THEME — CHAT INPUT (bottom composer bar)
+   The .chat-input pill was hardcoded to background:white, so
+   its light input text was invisible in dark mode.
+   ========================================================= */
+
+:root[data-theme="dark"] .chat-input {
+  background: var(--surface-recessed) !important;
+  border-color: var(--glass-border) !important;
+}
+
+:root[data-theme="dark"] .chat-input:focus-within {
+  background: var(--surface-card) !important;
+  border-color: var(--cyan-dim) !important;
+}
+
+:root[data-theme="dark"] .chat-input input {
+  background: transparent !important;
+  color: var(--ink) !important;
+}
+
+:root[data-theme="dark"] .chat-input input::placeholder {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] .chat-input input:-webkit-autofill {
+  -webkit-text-fill-color: var(--ink) !important;
+  box-shadow: 0 0 0 1000px var(--surface-recessed) inset !important;
+}
