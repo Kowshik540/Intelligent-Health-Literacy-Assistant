@@ -1224,18 +1224,29 @@ export default function AssistantPage() {
                       </strong>
 
                       <h3>
-                        Clinical advice
-                        generation blocked.
+                        Call 108 or 112 immediately.
                       </h3>
 
                       <p>
-                        This request may
-                        describe a medical
-                        emergency. The system
-                        has stopped normal AI
-                        generation. Seek
-                        emergency medical
-                        assistance immediately.
+                        This request may describe a
+                        medical emergency. Please call
+                        emergency services now —{" "}
+                        <strong>108 (ambulance)</strong> or{" "}
+                        <strong>112 (all emergencies)</strong>{" "}
+                        in India, or go to the nearest
+                        emergency department.
+                      </p>
+
+                      <ul className="emergency-steps">
+                        <li>Do not drive yourself — call an ambulance or have someone drive you.</li>
+                        <li>Sit upright and stay calm.</li>
+                        <li>Alert someone nearby immediately.</li>
+                      </ul>
+
+                      <p className="emergency-note">
+                        This assistant cannot handle
+                        emergencies and has stopped normal
+                        AI generation.
                       </p>
                     </div>
                   </div>

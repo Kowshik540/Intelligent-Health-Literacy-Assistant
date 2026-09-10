@@ -1820,3 +1820,30 @@ textarea {
   background: rgba(0, 0, 0, 0.04);
   border-color: rgba(0, 0, 0, 0.12);
 }
+
+/* Emergency block — actionable helpline guidance (call 108 / 112). */
+.safety-result.emergency h3 {
+  color: var(--danger);
+}
+
+.safety-result.emergency p strong {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.emergency-steps {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.emergency-steps li {
+  color: var(--ink-dim);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.emergency-note {
+  margin-top: 8px !important;
+  font-size: 9px !important;
+  opacity: 0.8;
+}
