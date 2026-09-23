@@ -33,43 +33,77 @@ class ClarificationService:
     SYMPTOM_QUESTIONS = {
         "headache": [
             "How long have you had the headache — hours, days, or weeks?",
+            "Did it come on suddenly or gradually?",
+            "Where is the pain — one side, both sides, forehead, or the back of the head?",
             "How would you rate the pain from 1 to 10?",
+            "Do you have any other symptoms such as fever, a stiff neck, vision changes, nausea, or vomiting?",
             "Do you know your current blood pressure reading? (high blood pressure can cause headaches)",
-            "Do you have any other symptoms such as fever, vision changes, or nausea?",
         ],
         "fever": [
             "What is your current temperature, if you have measured it?",
             "How many days have you had the fever?",
-            "Do you have any other symptoms such as cough, sore throat, or body aches?",
+            "Is the fever constant, or does it come and go?",
+            "Do you have any other symptoms such as cough, sore throat, body aches, chills, or a rash?",
+            "Have you had any recent travel, infection, or contact with someone who was ill?",
         ],
         "chest": [
             "How long have you been feeling this?",
-            "Does the discomfort spread to your arm, jaw, or back?",
-            "Do you have any shortness of breath or sweating along with it?",
+            "How would you describe it — pressure, tightness, burning, or sharp pain?",
+            "Does the discomfort spread to your arm, jaw, neck, or back?",
+            "Do you have any shortness of breath, sweating, nausea, or dizziness along with it?",
+            "Does it get worse with activity or when you breathe deeply?",
         ],
         "cough": [
             "How long have you had the cough — days or weeks?",
-            "Is it a dry cough, or are you bringing up phlegm?",
-            "Do you also have a fever or difficulty breathing?",
+            "Is it a dry cough, or are you bringing up phlegm? If so, what colour?",
+            "Do you also have a fever, sore throat, or difficulty breathing?",
+            "Is there any wheezing, chest pain, or blood in what you cough up?",
         ],
         "stomach": [
-            "Where exactly is the pain located?",
+            "Where exactly is the pain located — upper, lower, right, or left?",
             "How long has it lasted, and how severe is it from 1 to 10?",
-            "Do you have any nausea, vomiting, or change in bowel habits?",
+            "How would you describe it — cramping, burning, dull, or sharp?",
+            "Do you have any nausea, vomiting, fever, or change in bowel habits (diarrhoea or constipation)?",
+            "Does anything make it better or worse, such as eating or passing stool?",
         ],
         "dizzy": [
             "How long have you been feeling dizzy?",
-            "Do you know your current blood pressure reading?",
-            "Do you have any other symptoms such as headache, nausea, or fainting?",
+            "Is it a spinning sensation (vertigo), or more of a lightheaded / faint feeling?",
+            "Does it happen when you stand up, or is it there all the time?",
+            "Do you have any other symptoms such as headache, nausea, fainting, or weakness?",
+            "Do you know your current blood pressure or blood sugar reading?",
         ],
         "tired": [
             "How long have you been feeling this way?",
-            "Do you have any other symptoms such as weight change, fever, or low mood?",
+            "Is the tiredness constant, or worse at particular times of day?",
+            "Do you have any other symptoms such as weight change, fever, poor sleep, or low mood?",
+            "Have you had any changes in appetite, thirst, or urination?",
             "Do you know your recent blood pressure or blood sugar readings?",
+        ],
+        "body_pain": [
+            "How long have you had the body pain — a day, several days, or longer?",
+            "Which parts of your body are affected — muscles, joints, or all over?",
+            "How would you rate the pain from 1 to 10?",
+            "Do you have any other symptoms such as fever, headache, chills, cough, or a sore throat?",
+            "Have you had any recent illness, strenuous activity, or injury?",
+        ],
+        "throat": [
+            "How long have you had the sore throat?",
+            "Do you have pain or difficulty when swallowing?",
+            "Do you also have a fever, cough, or swollen glands in your neck?",
+            "Have you noticed any white patches or redness at the back of your throat?",
+        ],
+        "breathing": [
+            "How long have you had difficulty breathing?",
+            "Did it start suddenly or gradually?",
+            "Is it worse with activity, lying down, or at rest?",
+            "Do you have any chest pain, cough, wheezing, or swelling in your legs?",
         ],
         "pain": [
             "Where is the pain located?",
             "How long have you had it, and how severe is it from 1 to 10?",
+            "How would you describe it — dull, sharp, burning, or throbbing?",
+            "Do you have any other symptoms along with the pain, such as fever, swelling, or numbness?",
             "Does anything make it better or worse?",
         ],
     }
@@ -87,7 +121,21 @@ class ClarificationService:
         ],
         "dizzy": ["dizzy", "dizziness", "lightheaded", "light headed", "giddy"],
         "tired": ["tired", "fatigue", "fatigued", "weakness", "exhausted"],
-        "pain": ["body pain", "body ache", "pain"],
+        # Whole-body aches get their own topic so we ask about associated
+        # symptoms (fever, headache, chills) rather than just location.
+        "body_pain": [
+            "body pain", "body pains", "body ache", "body aches",
+            "bodyache", "body paining", "muscle pain", "muscle ache",
+            "joint pain", "joint pains", "pain all over", "aching all over",
+        ],
+        "throat": ["sore throat", "throat pain", "throat ache", "throat"],
+        "breathing": [
+            "shortness of breath", "difficulty breathing", "trouble breathing",
+            "breathless", "hard to breathe", "cannot breathe", "can't breathe",
+        ],
+        # Generic single-word "pain" — checked last, and only wins when no
+        # more specific phrase above matched (longest-match wins in _detect_topic).
+        "pain": ["pain", "ache", "aching"],
     }
 
     # First-person phrasing that signals the user is describing THEIR OWN symptom.
