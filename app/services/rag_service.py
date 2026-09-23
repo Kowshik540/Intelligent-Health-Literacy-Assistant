@@ -121,6 +121,16 @@ class RAGService:
         "medicine, or general wellbeing, and I'll do my best to help."
     )
 
+    # Strict-RAG refusal — shown when the verified documents do not cover the
+    # topic. The assistant does NOT answer from general knowledge; it says so
+    # directly so every answer stays grounded in the document library.
+    NO_COVERAGE_REPLY = (
+        "I don't have information on this topic in my verified medical "
+        "documents, so I can't provide a grounded answer. My responses come "
+        "only from a curated set of trusted medical guidelines. Please consult "
+        "a qualified healthcare professional for guidance on this."
+    )
+
     # Generates an answer from the model's general medical knowledge when no
     # verified document covers the question. Marked clearly as general info.
     # If the input is not a real health question, returns a polite prompt to
@@ -299,11 +309,16 @@ class RAGService:
             and not _is_epidemiological_chunk(doc)
         ]
 
-        # If no verified chunk is relevant enough, don't just refuse — fall back
-        # to general medical knowledge so the assistant is still helpful. The
-        # answer is clearly labelled as general information (no citations).
+        # Strict RAG: if no verified chunk is relevant enough, we do NOT answer
+        # from general knowledge. We tell the user directly that the topic is
+        # not covered by the verified documents.
         if not relevant_results:
-            return await self._general_answer(question, deterministic, acuity)
+            return {
+                "answer": self.NO_COVERAGE_REPLY,
+                "sources": [],
+                "citations": [],
+                "no_coverage": True,
+            }
 
         # Step 3: Build context from relevant chunks for the LLM
         context_parts = []
@@ -348,11 +363,16 @@ class RAGService:
                 f"Please ensure the LLM service is running. Error: {str(e)}"
             )
 
-        # If the LLM decided the retrieved text does not actually answer the
-        # question (e.g. it only matched an index or copyright page), fall back
-        # to general medical knowledge instead of leaving the user with nothing.
+        # Strict RAG: if the LLM decided the retrieved text does not actually
+        # answer the question (e.g. it only matched an index or copyright page),
+        # refuse rather than answering from general knowledge.
         if "i cannot provide information" in answer.lower():
-            return await self._general_answer(question, deterministic, acuity)
+            return {
+                "answer": self.NO_COVERAGE_REPLY,
+                "sources": [],
+                "citations": [],
+                "no_coverage": True,
+            }
 
         sources = list(set([c["source"] for c in citations]))
 
