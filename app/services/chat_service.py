@@ -130,20 +130,25 @@ class ChatService:
     async def _clarification_state(
         self,
         conversation_id: Optional[str],
-    ) -> tuple[bool, Optional[str], int, str]:
+    ) -> tuple[bool, Optional[str], int, str, list, list]:
         """
         Inspects the conversation to see if we are in the middle of a
         clarification sequence.
 
         Returns:
-            (in_progress, topic, asked_count, gathered_context)
+            (in_progress, topic, asked_count, gathered_context,
+             user_answers, asked_questions)
 
         gathered_context combines the original symptom message with every
         answer the user has given so far, so the final retrieval query is rich.
+        user_answers is that same list, unjoined. asked_questions is the list
+        of clarification questions the assistant has already asked in this
+        sequence (marker stripped), so the LLM can avoid repeating them.
         """
 
+        empty = (False, None, 0, "", [], [])
         if not conversation_id:
-            return False, None, 0, ""
+            return empty
 
         result = await self.db.execute(
             select(Message)
@@ -154,14 +159,14 @@ class ChatService:
 
         recent = list(result.scalars().all())
         if not recent:
-            return False, None, 0, ""
+            return empty
 
         # The most recent message must be the assistant's clarification prompt.
         last = recent[0]
         if last.role != MessageRole.ASSISTANT or CLARIFICATION_MARKER not in (
             last.content or ""
         ):
-            return False, None, 0, ""
+            return empty
 
         topic, asked_count = _parse_marker(last.content)
 
@@ -170,9 +175,16 @@ class ChatService:
         # assistant message that is NOT a clarification prompt — that marks
         # the boundary of an earlier, unrelated exchange.
         sequence_user_messages = []
+        asked_questions = []
         for msg in recent:
             if msg.role == MessageRole.ASSISTANT:
                 if CLARIFICATION_MARKER in (msg.content or ""):
+                    # Strip the marker to recover the question text as shown.
+                    q = re.sub(
+                        r"\[\[CLARIFY:[^\]]*\]\]", "", msg.content or ""
+                    ).strip()
+                    if q:
+                        asked_questions.append(q)
                     continue  # part of this clarification sequence
                 break  # previous unrelated answer — stop here
             # User message within the current sequence.
@@ -180,11 +192,19 @@ class ChatService:
 
         # Oldest first: the original symptom, then each reply.
         sequence_user_messages.reverse()
+        asked_questions.reverse()
         gathered_context = ". ".join(
             g for g in sequence_user_messages if g
         )
 
-        return True, topic, asked_count, gathered_context
+        return (
+            True,
+            topic,
+            asked_count,
+            gathered_context,
+            [g for g in sequence_user_messages if g],
+            asked_questions,
+        )
 
     async def _gather_session_history(
         self,
@@ -337,17 +357,31 @@ class ChatService:
         # question at a time before answering. Definition questions
         # ("what is diabetes") are answered directly.
 
-        in_progress, topic, asked_count, gathered_context = (
-            await self._clarification_state(conversation_id)
-        )
+        (
+            in_progress,
+            topic,
+            asked_count,
+            gathered_context,
+            _user_answers,
+            asked_questions,
+        ) = await self._clarification_state(conversation_id)
 
         if in_progress and topic:
             # Continue an existing clarification sequence: ask the next
-            # question, or finish and proceed to answer.
-            clar = self._clarifier.continue_topic(topic, asked_count)
+            # question, or finish and proceed to answer. Pass the gathered
+            # dialogue and the questions already asked so the next question
+            # follows on naturally and never repeats.
+            clar = self._clarifier.continue_topic(
+                topic,
+                asked_count,
+                dialogue=gathered_context,
+                asked_questions=asked_questions,
+            )
         else:
             # Fresh message: decide whether to start a clarification sequence.
-            clar = self._clarifier.check(sanitized_query, asked_count=0)
+            clar = self._clarifier.check(
+                sanitized_query, asked_count=0, dialogue=sanitized_query
+            )
 
         if clar.needs_clarification:
             conversation = await self.get_or_create_conversation(
@@ -456,6 +490,39 @@ class ChatService:
         # Original clinical answer generated from the
         # verified documents in ChromaDB.
         clinical_answer = rag_response["answer"]
+
+        # Strict-RAG short-circuit: when retrieval found no supporting evidence,
+        # return the refusal verbatim (no simplification/verification), so the
+        # exact "I don't have verified information" wording is preserved.
+        if rag_response.get("no_coverage"):
+            conversation = await self.get_or_create_conversation(
+                user_id=user_id,
+                conversation_id=conversation_id,
+                title=message[:50],
+            )
+            self.db.add(Message(
+                conversation_id=conversation.id,
+                role=MessageRole.USER,
+                content=sanitized_query,
+            ))
+            await self.db.flush()
+            ai_msg = Message(
+                conversation_id=conversation.id,
+                role=MessageRole.ASSISTANT,
+                content=clinical_answer,
+            )
+            self.db.add(ai_msg)
+            await self.db.flush()
+            return {
+                "conversation_id": conversation.id,
+                "message": ai_msg,
+                "sources": [],
+                "citations": [],
+                "is_emergency": False,
+                "pii_detected": guardrail_result.pii_detected,
+                "clinical_answer": clinical_answer,
+                "simplified_answer": clinical_answer,
+            }
 
         # Audit the generated answer against the deterministic biometric
         # classifications and triage acuity. If it contradicts the numbers or
