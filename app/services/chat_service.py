@@ -265,6 +265,78 @@ class ChatService:
             return True
         return False
 
+    # Canonical, retrieval-friendly phrase for each clarification topic. Using
+    # a clean medical phrase (not the user's casual wording) anchors the
+    # embedding search on the right concept.
+    _TOPIC_QUERY_SEED = {
+        "headache": "headache",
+        "fever": "fever",
+        "chest": "chest pain",
+        "cough": "cough",
+        "stomach": "abdominal pain stomach",
+        "dizzy": "dizziness",
+        "tired": "fatigue tiredness",
+        "body_pain": "body aches muscle pain",
+        "throat": "sore throat",
+        "breathing": "shortness of breath difficulty breathing",
+        "pain": "pain",
+    }
+
+    # Filler / stop words that add no medical signal to a retrieval query.
+    _QUERY_STOPWORDS = {
+        "i", "am", "im", "i'm", "have", "having", "has", "had", "a", "an",
+        "the", "is", "are", "was", "were", "it", "its", "my", "me", "of",
+        "and", "or", "to", "for", "in", "on", "at", "with", "since", "for",
+        "about", "around", "just", "very", "really", "so", "some", "any",
+        "yes", "no", "yeah", "nope", "ok", "okay", "day", "days", "week",
+        "weeks", "hour", "hours", "month", "months", "year", "years", "ago",
+        "morning", "night", "everywhere", "all", "over", "bit", "little",
+        "lot", "like", "feel", "feeling", "been", "get", "getting", "got",
+        "side", "both", "sides", "rate", "scale", "out",
+        "this", "that", "these", "those", "there", "here", "now", "then",
+        "when", "how", "what", "where", "much", "many", "more", "less",
+        "mostly", "still", "also", "too", "them", "they", "you", "your",
+    }
+
+    def _build_symptom_query(self, topic: Optional[str], gathered_context: str) -> str:
+        """
+        Turn the gathered clarification dialogue into a clean, keyword-focused
+        retrieval query.
+
+        Strategy: start from a canonical medical phrase for the detected topic,
+        then append meaningful descriptive words the patient gave (e.g. "fever",
+        "runny nose", "cough") while dropping bare numbers, durations, and
+        filler that pollute the embedding. This keeps the search anchored on the
+        symptom concept — which we verified scores well in ChromaDB — instead of
+        the noisy raw string that matched only table-of-contents pages.
+        """
+        seed = self._TOPIC_QUERY_SEED.get(topic or "", "")
+
+        text = (gathered_context or "").lower()
+        # Strip punctuation to whitespace, then tokenize.
+        tokens = re.split(r"[^a-z]+", text)
+
+        keywords = []
+        seen = set()
+        for tok in tokens:
+            if len(tok) < 3:
+                continue  # drops "9", single letters, tiny fragments
+            if tok in self._QUERY_STOPWORDS:
+                continue
+            if tok in seen:
+                continue
+            seen.add(tok)
+            keywords.append(tok)
+
+        # Combine the canonical seed with the patient's descriptive keywords.
+        # De-dupe words already present in the seed.
+        seed_words = set(seed.split())
+        extra = [k for k in keywords if k not in seed_words]
+        query = (seed + " " + " ".join(extra)).strip()
+
+        # Safety net: never return an empty query.
+        return query or (gathered_context or "").strip()
+
     async def process_message(
         self,
         user_id: str,
@@ -428,23 +500,32 @@ class ChatService:
                 "simplified_answer": clar.follow_up_message,
             }
 
-        # If we just finished gathering clarification details, use the full
-        # gathered context (original symptom + all answers) as the query.
+        # If we just finished gathering clarification details, build a clean,
+        # keyword-focused retrieval query from the symptom topic + the
+        # descriptive words the patient gave. We deliberately do NOT feed the
+        # raw dialogue ("i have body pains. 2 days. everywhere. 9. running
+        # nose") to the retriever: bare numbers and filler dilute the embedding
+        # and drag matches toward table-of-contents pages that then get
+        # filtered out, leaving nothing. The full raw context is still used for
+        # triage/biometrics below so severity numbers aren't lost.
         retrieval_query = sanitized_query
         if in_progress and gathered_context:
-            retrieval_query = gathered_context
+            retrieval_query = self._build_symptom_query(topic, gathered_context)
         elif session_history and self._is_followup(sanitized_query):
             # A vague follow-up ("is that ok?", "should I worry?") carries no
             # medical keywords of its own, so retrieval would drift off-topic.
             # Anchor it to what the patient said earlier in the session.
             retrieval_query = f"{session_history} {sanitized_query}".strip()
 
-        # Run triage + biometrics on the full context (current message,
-        # clarification answers, and session history) so red flags from
-        # earlier turns aren't lost.
-        synthesis_context = retrieval_query
-        if session_history and session_history not in retrieval_query:
-            synthesis_context = f"{session_history} | {retrieval_query}".strip(" |")
+        # Run triage + biometrics on the full RAW context (current message,
+        # every clarification answer, and session history) so red flags and
+        # severity numbers from earlier turns aren't lost. Note we use the raw
+        # gathered_context here, NOT the cleaned retrieval_query, so a "9/10"
+        # severity or a reported temperature still reaches the safety checks.
+        safety_text = gathered_context if (in_progress and gathered_context) else retrieval_query
+        synthesis_context = safety_text
+        if session_history and session_history not in safety_text:
+            synthesis_context = f"{session_history} | {safety_text}".strip(" |")
 
         triage = self._triage.assess(synthesis_context)
         biometrics = self._biometrics.evaluate(synthesis_context)
