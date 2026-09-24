@@ -115,6 +115,13 @@ class ClarificationService:
             "Is it worse with activity, lying down, or at rest?",
             "Do you have any chest pain, cough, wheezing, or swelling in your legs?",
         ],
+        "vision": [
+            "What are you noticing with your vision — blurring, loss of vision, double vision, or something else?",
+            "Did it start suddenly or gradually, and how long has it lasted?",
+            "Is it in one eye or both eyes?",
+            "Do you have any eye pain, redness, flashes, floaters, or a headache along with it?",
+            "Do you wear glasses or contact lenses, or have any condition such as diabetes or high blood pressure?",
+        ],
         "pain": [
             "Where is the pain located?",
             "How long have you had it, and how severe is it from 1 to 10?",
@@ -149,6 +156,15 @@ class ClarificationService:
             "shortness of breath", "difficulty breathing", "trouble breathing",
             "breathless", "hard to breathe", "cannot breathe", "can't breathe",
         ],
+        # Vision / eye complaints — ask about the nature of the change, onset,
+        # laterality and red flags (pain, flashes, floaters) before answering.
+        "vision": [
+            "eye sight", "eyesight", "eye-sight", "vision problem",
+            "vision problems", "blurred vision", "blurry vision", "blurred",
+            "blurry", "double vision", "vision loss", "loss of vision",
+            "cannot see", "can't see", "eye pain", "eye problem",
+            "eye problems", "eyes", "eye", "vision",
+        ],
         # Generic single-word "pain" — checked last, and only wins when no
         # more specific phrase above matched (longest-match wins in _detect_topic).
         "pain": ["pain", "ache", "aching"],
@@ -158,7 +174,7 @@ class ClarificationService:
     PERSONAL_MARKERS = [
         r"\bi\s+(have|have\s+a|am\s+having|'?m\s+having|feel|'?m\s+feeling|got|'?ve\s+got|'?ve\s+been)\b",
         r"\bi\s+am\b",
-        r"\bmy\s+(head|chest|stomach|throat|body|back)\b",
+        r"\bmy\s+(head|chest|stomach|throat|body|back|eye|eyes|vision|eyesight)\b",
         r"\bi'?m\b",
         r"\bhaving\s+(a\s+)?(head\s*ache|headache|fever|cough|pain)\b",
         r"\bi\s+got\b",

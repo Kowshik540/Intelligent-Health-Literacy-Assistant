@@ -279,6 +279,7 @@ class ChatService:
         "body_pain": "body aches muscle pain",
         "throat": "sore throat",
         "breathing": "shortness of breath difficulty breathing",
+        "vision": "vision problem eye",
         "pain": "pain",
     }
 
